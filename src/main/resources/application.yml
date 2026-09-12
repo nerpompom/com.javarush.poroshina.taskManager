@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/task_manager
+    username: postgres
+    password: postgres
+  sql:
+    init:
+      mode: always
+#      data-locations: classpath:data.sql
+#      schema-locations: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      format_sql: true
+#      jakarta:
+#        persistence:
+#          schema-generation:
+#            database:
+#              action: create-drop
+    show-sql: true
+#  config:
+#    activate:
+#      on-profile: local
+
+
+
+

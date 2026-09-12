@@ -47,6 +47,12 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- Опционально: DBeaver/IDE часто просят этот драйвер для отображения метрик пула -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+    </dependency>
+
     <!-- Тесты (опционально, но рекомендуется) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
