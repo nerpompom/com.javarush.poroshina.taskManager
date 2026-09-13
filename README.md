@@ -22,3 +22,7 @@ UPDATE tasks
 SET completed_at = NOW()
 WHERE id = 3;
 
+Ручки для пользователя:
+POST http://localhost:8080/api/v1/users - создание пользователя
+GET http://localhost:8080/api/v1/users - получить список всех пользователей (id, username ПОТОМ ДОБАВЯТСЯ ЕЩЕ ЗАДАЧИ ГДЕ ОНИ АВТОРЫ ИЛИ ИСПОЛНИТЕЛИ)
+GET http://localhost:8080/api/v1/users/{id} - получить конкретного пользователя по id

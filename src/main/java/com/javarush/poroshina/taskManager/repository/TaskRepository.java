@@ -1,6 +1,6 @@
 package com.javarush.poroshina.taskManager.repository;
 
-import com.javarush.poroshina.taskManager.model.Task;
+import com.javarush.poroshina.taskManager.model.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

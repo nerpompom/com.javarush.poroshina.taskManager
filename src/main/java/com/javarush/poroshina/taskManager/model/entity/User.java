@@ -1,4 +1,4 @@
-package com.javarush.poroshina.taskManager.model;
+package com.javarush.poroshina.taskManager.model.entity;
 
 import jakarta.persistence.*;
 

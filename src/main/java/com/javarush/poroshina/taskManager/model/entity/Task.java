@@ -1,5 +1,6 @@
-package com.javarush.poroshina.taskManager.model;
+package com.javarush.poroshina.taskManager.model.entity;
 
+import com.javarush.poroshina.taskManager.model.TaskStatus;
 import jakarta.persistence.*;
 
 import java.time.Instant;
