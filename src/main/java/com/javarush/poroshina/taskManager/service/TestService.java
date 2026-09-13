@@ -25,6 +25,6 @@ public class TestService {
         tasks.forEach(task -> System.out.println("Task: " + task.getDescription()));
 
         List<Task> executed_tasks = taskRepository.findByExecutorId(user.getId());
-        tasks.forEach(task -> System.out.println("Task: " + task.getDescription()));
+        executed_tasks.forEach(task -> System.out.println("Task: " + task.getDescription()));
     }
 }
