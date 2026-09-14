@@ -6,6 +6,7 @@ import com.javarush.poroshina.taskManager.model.dto.UserResponse;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ public class UserService {
     }
 
     //DTO для получения одного пользователя
+    @Transactional(readOnly = true)
     public UserResponse getUserResponseById(Long id) {
         User user = getUserById(id);
         return new UserResponse(user.getId(), user.getUsername());
@@ -31,6 +33,7 @@ public class UserService {
     }
 
     // если нужно и список DTO
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUserResponses() {
         return userRepository.findAll()
                 .stream()
@@ -38,10 +41,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-//    public void createUser(User user) {
-//        userRepository.save(user);
-//    }
-
+    @Transactional
     public UserResponse createUser(UserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());

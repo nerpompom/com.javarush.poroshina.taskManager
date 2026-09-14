@@ -1,4 +1,4 @@
-package com.javarush.poroshina.taskManager.conroller;
+package com.javarush.poroshina.taskManager.controller;
 
 import com.javarush.poroshina.taskManager.model.dto.UserRequest;
 import com.javarush.poroshina.taskManager.model.dto.UserResponse;

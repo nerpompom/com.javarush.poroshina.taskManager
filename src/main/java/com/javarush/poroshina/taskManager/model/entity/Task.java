@@ -39,7 +39,7 @@ public class Task {
     private Instant completedAt;
 
     @Column(name = "is_deleted", nullable = false)
-    private Boolean deleted;
+    private Boolean deleted = false;
 
     @PrePersist
     private void onCreate() {
@@ -53,6 +53,8 @@ public class Task {
         this.updatedAt = Instant.now();
     }
 
+
+    //Проверить чтобы были не примитивы а ссылки
     public long getId() {
         return id;
     }
