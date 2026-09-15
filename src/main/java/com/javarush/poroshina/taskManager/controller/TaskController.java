@@ -20,7 +20,6 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    //ОСТАНОВИЛАСЬ ТУТ. НАДО ОБРАБОТАТЬ ИСКЛЮЧИТЕЛЬНЫЕ СИТУАЦИИ
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long id
@@ -48,6 +47,7 @@ public class TaskController {
                 .body(created);
     }
 
+    //ОСТАНОВИЛАСЬ ТУТ
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,

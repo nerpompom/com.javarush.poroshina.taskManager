@@ -26,3 +26,9 @@ WHERE id = 3;
 POST http://localhost:8080/api/v1/users - создание пользователя
 GET http://localhost:8080/api/v1/users - получить список всех пользователей (id, username ПОТОМ ДОБАВЯТСЯ ЕЩЕ ЗАДАЧИ ГДЕ ОНИ АВТОРЫ ИЛИ ИСПОЛНИТЕЛИ)
 GET http://localhost:8080/api/v1/users/{id} - получить конкретного пользователя по id
+
+Ручки для задач:
+GET http://localhost:8080/api/v1/tasks/{id} - получить задачу по id
+GET http://localhost:8080/api/v1/tasks - получить список всех задач
+POST http://localhost:8080/api/v1/tasks - создать новую задачу (при создании задаем только authorId и description)
+
