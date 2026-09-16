@@ -3,8 +3,9 @@ package com.javarush.poroshina.taskManager.service;
 import com.javarush.poroshina.taskManager.exception.TaskNotFoundException;
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
 import com.javarush.poroshina.taskManager.model.TaskStatus;
-import com.javarush.poroshina.taskManager.model.dto.TaskRequest;
-import com.javarush.poroshina.taskManager.model.dto.TaskResponse;
+import com.javarush.poroshina.taskManager.model.dto.TaskCreateRequestDto;
+import com.javarush.poroshina.taskManager.model.dto.TaskResponseDto;
+import com.javarush.poroshina.taskManager.model.dto.TaskUpdateRequestDto;
 import com.javarush.poroshina.taskManager.model.entity.Task;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.TaskRepository;
@@ -33,20 +34,20 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public TaskResponse getTaskResponseById(Long id) {
+    public TaskResponseDto getTaskResponseById(Long id) {
         return toResponse(getTaskById(id));
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponse> getAllTaskResponses() {
-        return taskRepository.findAll()
+    public List<TaskResponseDto> getAllTaskResponses() {
+        return taskRepository.findAllByDeletedFalse()
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public TaskResponse createTask(TaskRequest request) {
+    public TaskResponseDto createTask(TaskCreateRequestDto request) {
         User author = getUserById(request.getAuthorId());
 
         Task task = new Task();
@@ -64,17 +65,72 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponse updateTask(Long id, TaskRequest request) {
+    public TaskResponseDto updateTask(
+            Long id,
+            TaskUpdateRequestDto request
+    ) {
         Task task = getTaskById(id);
 
         if (task.isDeleted()) {
-            throw new IllegalStateException("Deleted task cannot be changed");
+            throw new TaskNotFoundException(
+                    "Task not found with id: " + id
+            );
+        }
+
+        TaskStatus newStatus = request.getTaskStatus();
+
+        if (newStatus == TaskStatus.IN_PROGRESS
+                && request.getExecutorId() == null) {
+            throw new IllegalStateException(
+                    "Executor id is required for IN_PROGRESS status"
+            );
+        }
+
+        if (newStatus == TaskStatus.CREATED
+                && request.getExecutorId() != null) {
+            throw new IllegalStateException(
+                    "Executor id must be null for CREATED status"
+            );
+        }
+
+        if (newStatus == TaskStatus.DONE
+                && request.getExecutorId() == null) {
+            throw new IllegalStateException(
+                    "Executor id is required for DONE status"
+            );
+        }
+
+        if (newStatus == TaskStatus.DONE
+                && task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
+            throw new IllegalStateException(
+                    "Only task in progress can be completed"
+            );
         }
 
         task.setDescription(request.getDescription());
+        task.setTaskStatus(newStatus);
 
-        // createdAt, author и статус здесь не меняются.
-        // updatedAt будет установлен через @PreUpdate.
+        if (newStatus == TaskStatus.CREATED) {
+            task.setExecutor(null);
+            task.setCompletedAt(null);
+        }
+
+        if (newStatus == TaskStatus.IN_PROGRESS) {
+            User executor = getUserById(request.getExecutorId());
+
+            task.setExecutor(executor);
+            task.setCompletedAt(null);
+        }
+
+        if (newStatus == TaskStatus.DONE) {
+            User executor = getUserById(request.getExecutorId());
+
+            task.setExecutor(executor);
+            task.setCompletedAt(Instant.now());
+        }
+
+        task.setUpdatedAt(Instant.now());
+
         Task savedTask = taskRepository.save(task);
 
         return toResponse(savedTask);
@@ -85,91 +141,21 @@ public class TaskService {
         Task task = getTaskById(id);
 
         if (task.isDeleted()) {
-            throw new IllegalStateException("Task is already deleted");
+            throw new TaskNotFoundException(
+                    "Task not found with id: " + id
+            );
         }
 
         task.setDeleted(true);
-        task.setTaskStatus(TaskStatus.DELETED);
+        task.setExecutor(null);
+        task.setCompletedAt(null);
         task.setUpdatedAt(Instant.now());
 
         taskRepository.save(task);
     }
 
-    @Transactional
-    public TaskResponse takeTaskInProgress(Long taskId, Long executorId) {
-        Task task = getTaskById(taskId);
-        User executor = getUserById(executorId);
-
-        if (task.isDeleted()) {
-            throw new IllegalStateException(
-                    "Deleted task cannot be taken in progress"
-            );
-        }
-
-        if (task.getCompletedAt() != null) {
-            throw new IllegalStateException(
-                    "Completed task cannot be taken in progress"
-            );
-        }
-
-        task.setExecutor(executor);
-        task.setTaskStatus(TaskStatus.IN_PROGRESS);
-        task.setUpdatedAt(Instant.now());
-
-        Task savedTask = taskRepository.save(task);
-
-        return toResponse(savedTask);
-    }
-
-    @Transactional
-    public TaskResponse completeTask(Long id) {
-        Task task = getTaskById(id);
-
-        if (task.isDeleted()) {
-            throw new IllegalStateException(
-                    "Deleted task cannot be completed"
-            );
-        }
-
-        if (task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
-            throw new IllegalStateException(
-                    "Only task in progress can be completed"
-            );
-        }
-
-        Instant now = Instant.now();
-
-        task.setTaskStatus(TaskStatus.DONE);
-        task.setCompletedAt(now);
-        task.setUpdatedAt(now);
-
-        Task savedTask = taskRepository.save(task);
-
-        return toResponse(savedTask);
-    }
-
-    @Transactional
-    public TaskResponse returnTaskToCreated(Long id) {
-        Task task = getTaskById(id);
-
-        if (task.isDeleted()) {
-            throw new IllegalStateException(
-                    "Deleted task cannot be returned to CREATED status"
-            );
-        }
-
-        task.setTaskStatus(TaskStatus.CREATED);
-        task.setCompletedAt(null);
-        task.setExecutor(null);
-        task.setUpdatedAt(Instant.now());
-
-        Task savedTask = taskRepository.save(task);
-
-        return toResponse(savedTask);
-    }
-
     private Task getTaskById(Long id) {
-        return taskRepository.findById(id)
+        return taskRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() ->
                         new TaskNotFoundException(
                                 "Task not found with id: " + id
@@ -186,11 +172,11 @@ public class TaskService {
                 );
     }
 
-    private TaskResponse toResponse(Task task) {
+    private TaskResponseDto toResponse(Task task) {
         User author = task.getAuthor();
         User executor = task.getExecutor();
 
-        return new TaskResponse(
+        return new TaskResponseDto(
                 task.getId(),
                 task.getDescription(),
                 task.getTaskStatus(),

@@ -2,11 +2,11 @@ package com.javarush.poroshina.taskManager.model.dto;
 
 //Надо реализовать также чтобы можно было видеть список задач пользователя, где он автор и где исполнитель
 
-public class UserResponse {
+public class UserResponseDto {
     private final Long id;
     private final String username;
 
-    public UserResponse(Long id, String username) {
+    public UserResponseDto(Long id, String username) {
         this.id = id;
         this.username = username;
     }

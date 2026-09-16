@@ -1,7 +1,7 @@
 package com.javarush.poroshina.taskManager.controller;
 
-import com.javarush.poroshina.taskManager.model.dto.UserRequest;
-import com.javarush.poroshina.taskManager.model.dto.UserResponse;
+import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
+import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,18 +21,18 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserResponseById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUserResponses());
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
-        UserResponse created = userService.createUser(request);
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto request) {
+        UserResponseDto created = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 }

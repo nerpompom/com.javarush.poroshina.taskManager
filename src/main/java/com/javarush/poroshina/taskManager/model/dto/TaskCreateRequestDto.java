@@ -4,7 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public class TaskRequest {
+//Заменить название на Task Create Request
+public class TaskCreateRequestDto {
 
     @NotBlank(message = "Description must not be blank")
     @Size(max = 1000, message = "Description must be at most 1000 characters")
@@ -14,7 +15,7 @@ public class TaskRequest {
     @NotNull(message = "Author id must not be null")
     private Long authorId;
 
-    public TaskRequest() {
+    public TaskCreateRequestDto() {
     }
 
     public String getDescription() {
@@ -24,6 +25,7 @@ public class TaskRequest {
     public void setDescription(String description) {
         this.description = description;
     }
+
 
     public Long getAuthorId() {
         return authorId;

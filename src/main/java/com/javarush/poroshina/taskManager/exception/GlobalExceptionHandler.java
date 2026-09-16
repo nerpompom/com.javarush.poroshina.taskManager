@@ -55,6 +55,15 @@ public class GlobalExceptionHandler {
                 .body("Request body is missing or contains invalid data");
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalState(
+            IllegalStateException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
 
 
 //     4. Остальные неожиданные ошибки (опционально)

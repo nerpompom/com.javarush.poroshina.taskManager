@@ -4,7 +4,7 @@ import com.javarush.poroshina.taskManager.model.TaskStatus;
 
 import java.time.Instant;
 
-public class TaskResponse {
+public class TaskResponseDto {
 
     private final Long id;
     private final String description;
@@ -21,7 +21,7 @@ public class TaskResponse {
     private final Instant completedAt;
     private final Boolean deleted;
 
-    public TaskResponse(
+    public TaskResponseDto(
             Long id,
             String description,
             TaskStatus taskStatus,

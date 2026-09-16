@@ -1,7 +1,8 @@
 package com.javarush.poroshina.taskManager.controller;
 
-import com.javarush.poroshina.taskManager.model.dto.TaskRequest;
-import com.javarush.poroshina.taskManager.model.dto.TaskResponse;
+import com.javarush.poroshina.taskManager.model.dto.TaskCreateRequestDto;
+import com.javarush.poroshina.taskManager.model.dto.TaskResponseDto;
+import com.javarush.poroshina.taskManager.model.dto.TaskUpdateRequestDto;
 import com.javarush.poroshina.taskManager.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TaskResponse> getTaskById(
+    public ResponseEntity<TaskResponseDto> getTaskById(
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(
@@ -30,28 +31,27 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getAllTasks() {
+    public ResponseEntity<List<TaskResponseDto>> getAllTasks() {
         return ResponseEntity.ok(
                 taskService.getAllTaskResponses()
         );
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(
-            @Valid @RequestBody TaskRequest request
+    public ResponseEntity<TaskResponseDto> createTask(
+            @Valid @RequestBody TaskCreateRequestDto request
     ) {
-        TaskResponse created = taskService.createTask(request);
+        TaskResponseDto created = taskService.createTask(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(created);
     }
 
-    //ОСТАНОВИЛАСЬ ТУТ
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponse> updateTask(
+    public ResponseEntity<TaskResponseDto> updateTask(
             @PathVariable Long id,
-            @Valid @RequestBody TaskRequest request
+            @Valid @RequestBody TaskUpdateRequestDto request
     ) {
         return ResponseEntity.ok(
                 taskService.updateTask(id, request)
@@ -59,39 +59,13 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(
+    public ResponseEntity<String> deleteTask(
             @PathVariable Long id
     ) {
         taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
-    }
 
-    @PatchMapping("/{id}/in-progress")
-    public ResponseEntity<TaskResponse> takeTaskInProgress(
-            @PathVariable Long id,
-            @RequestParam Long executorId
-    ) {
-        return ResponseEntity.ok(
-                taskService.takeTaskInProgress(id, executorId)
-        );
-    }
-
-    @PatchMapping("/{id}/complete")
-    public ResponseEntity<TaskResponse> completeTask(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                taskService.completeTask(id)
-        );
-    }
-
-    @PatchMapping("/{id}/reset")
-    public ResponseEntity<TaskResponse> returnTaskToCreated(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(
-                taskService.returnTaskToCreated(id)
-        );
+        return ResponseEntity
+                .ok("Task was deleted successfully");
     }
 
 }

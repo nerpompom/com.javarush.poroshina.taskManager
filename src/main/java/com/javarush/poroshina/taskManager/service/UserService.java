@@ -1,8 +1,8 @@
 package com.javarush.poroshina.taskManager.service;
 
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
-import com.javarush.poroshina.taskManager.model.dto.UserRequest;
-import com.javarush.poroshina.taskManager.model.dto.UserResponse;
+import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
+import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,9 +22,9 @@ public class UserService {
 
     //DTO для получения одного пользователя
     @Transactional(readOnly = true)
-    public UserResponse getUserResponseById(Long id) {
+    public UserResponseDto getUserResponseById(Long id) {
         User user = getUserById(id);
-        return new UserResponse(user.getId(), user.getUsername());
+        return new UserResponseDto(user.getId(), user.getUsername());
     }
 
     private User getUserById(Long id) {
@@ -34,19 +34,19 @@ public class UserService {
 
     // если нужно и список DTO
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUserResponses() {
+    public List<UserResponseDto> getAllUserResponses() {
         return userRepository.findAll()
                 .stream()
-                .map(u -> new UserResponse(u.getId(), u.getUsername()))
+                .map(u -> new UserResponseDto(u.getId(), u.getUsername()))
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public UserResponse createUser(UserRequest request) {
+    public UserResponseDto createUser(UserRequestDto request) {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(request.getPassword());
         User saved = userRepository.save(user);
-        return new UserResponse(saved.getId(), saved.getUsername());
+        return new UserResponseDto(saved.getId(), saved.getUsername());
     }
 }
