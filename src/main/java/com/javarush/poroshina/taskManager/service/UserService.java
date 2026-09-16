@@ -3,6 +3,7 @@ package com.javarush.poroshina.taskManager.service;
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
+import com.javarush.poroshina.taskManager.model.entity.Task;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponseDto getUserResponseById(Long id) {
         User user = getUserById(id);
-        return new UserResponseDto(user.getId(), user.getUsername());
+        return toResponse(user);
     }
 
     private User getUserById(Long id) {
@@ -37,7 +38,7 @@ public class UserService {
     public List<UserResponseDto> getAllUserResponses() {
         return userRepository.findAll()
                 .stream()
-                .map(u -> new UserResponseDto(u.getId(), u.getUsername()))
+                .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -46,7 +47,30 @@ public class UserService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(request.getPassword());
-        User saved = userRepository.save(user);
-        return new UserResponseDto(saved.getId(), saved.getUsername());
+
+        User savedUser = userRepository.save(user);
+
+        return toResponse(savedUser);
+    }
+
+    private UserResponseDto toResponse(User user) {
+        List<Long> authoredTaskIds = user.getTasks()
+                .stream()
+                .filter(task -> !task.isDeleted())
+                .map(Task::getId)
+                .collect(Collectors.toList());
+
+        List<Long> executedTaskIds = user.getExecutedTasks()
+                .stream()
+                .filter(task -> !task.isDeleted())
+                .map(Task::getId)
+                .collect(Collectors.toList());
+
+        return new UserResponseDto(
+                user.getId(),
+                user.getUsername(),
+                authoredTaskIds,
+                executedTaskIds
+        );
     }
 }
