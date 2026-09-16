@@ -2,6 +2,7 @@ package com.javarush.poroshina.taskManager.model.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,17 +19,24 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Task> tasks;
+    @OneToMany(
+            mappedBy = "author",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<Task> tasks = new ArrayList<>();
 
-    @OneToMany(mappedBy = "executor", fetch = FetchType.LAZY)
-    private List<Task> executedTasks;
+    @OneToMany(
+            mappedBy = "executor",
+            fetch = FetchType.LAZY
+    )
+    private List<Task> executedTasks = new ArrayList<>();
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

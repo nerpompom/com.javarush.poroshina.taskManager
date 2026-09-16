@@ -1,6 +1,7 @@
 package com.javarush.poroshina.taskManager.service;
 
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
+import com.javarush.poroshina.taskManager.model.TaskStatus;
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.model.entity.Task;
@@ -71,6 +72,78 @@ public class UserService {
                 user.getUsername(),
                 authoredTaskIds,
                 executedTaskIds
+        );
+    }
+
+    private List<UserResponseDto> toResponseList(
+            List<User> users
+    ) {
+        return users.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersWithAuthoredTasks() {
+        return toResponseList(
+                userRepository.findUsersWithAuthoredTasks()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersByAuthoredTaskId(
+            Long taskId
+    ) {
+        return toResponseList(
+                userRepository.findUsersByAuthoredTaskId(taskId)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersWithoutAuthoredTasks() {
+        return toResponseList(
+                userRepository.findUsersWithoutAuthoredTasks()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersWithExecutedTasks() {
+        return toResponseList(
+                userRepository.findUsersWithExecutedTasks()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersByExecutedTaskId(
+            Long taskId
+    ) {
+        return toResponseList(
+                userRepository.findUsersByExecutedTaskId(taskId)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersWithoutExecutedTasks() {
+        return toResponseList(
+                userRepository.findUsersWithoutExecutedTasks()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getUsersWithInProgressTasks() {
+        return toResponseList(
+                userRepository.findUsersWithExecutedTasksByStatus(
+                        TaskStatus.IN_PROGRESS
+                )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> searchUsersByUsername(
+            String username
+    ) {
+        return toResponseList(
+                userRepository.findByUsernameContainingIgnoreCase(username)
         );
     }
 }
