@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -188,6 +190,128 @@ public class TaskService {
                 task.getUpdatedAt(),
                 task.getCompletedAt(),
                 task.isDeleted()
+        );
+    }
+
+    private List<TaskResponseDto> toResponseList(
+            List<Task> tasks
+    ) {
+        return tasks.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByAuthorId(Long authorId) {
+        getUserById(authorId);
+
+        return toResponseList(
+                taskRepository.findByAuthor_IdAndDeletedFalse(authorId)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByExecutorId(Long executorId) {
+        getUserById(executorId);
+
+        return toResponseList(
+                taskRepository.findByExecutor_IdAndDeletedFalse(executorId)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksWithoutExecutor() {
+        return toResponseList(
+                taskRepository.findByExecutorIsNullAndDeletedFalse()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByStatus(
+            TaskStatus taskStatus
+    ) {
+        return toResponseList(
+                taskRepository.findByTaskStatusAndDeletedFalse(
+                        taskStatus
+                )
+        );
+    }
+
+    private Instant toStartOfDay(
+            LocalDate date,
+            ZoneId zoneId
+    ) {
+        return date
+                .atStartOfDay(zoneId)
+                .toInstant();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByCreatedDate(
+            LocalDate date,
+            ZoneId zoneId
+    ) {
+        Instant start = toStartOfDay(date, zoneId);
+        Instant end = toStartOfDay(date.plusDays(1), zoneId);
+
+        return toResponseList(
+                taskRepository
+                        .findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndDeletedFalse(
+                                start,
+                                end
+                        )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByUpdatedDate(
+            LocalDate date,
+            ZoneId zoneId
+    ) {
+        Instant start = toStartOfDay(date, zoneId);
+        Instant end = toStartOfDay(date.plusDays(1), zoneId);
+
+        return toResponseList(
+                taskRepository
+                        .findByUpdatedAtGreaterThanEqualAndUpdatedAtLessThanAndDeletedFalse(
+                                start,
+                                end
+                        )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByCompletedDate(
+            LocalDate date,
+            ZoneId zoneId
+    ) {
+        Instant start = toStartOfDay(date, zoneId);
+        Instant end = toStartOfDay(date.plusDays(1), zoneId);
+
+        return toResponseList(
+                taskRepository
+                        .findByCompletedAtGreaterThanEqualAndCompletedAtLessThanAndDeletedFalse(
+                                start,
+                                end
+                        )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> searchTasksByDescription(
+            String description
+    ) {
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Description search value must not be blank"
+            );
+        }
+
+        return toResponseList(
+                taskRepository
+                        .findByDescriptionContainingIgnoreCaseAndDeletedFalse(
+                                description.trim()
+                        )
         );
     }
 }
