@@ -72,7 +72,6 @@ public class TaskController {
                 .ok("Task was deleted successfully");
     }
 
-    //ОСТАНОВИЛАСЬ ТУТ
     @GetMapping("/by-author/{authorId}")
     public ResponseEntity<List<TaskResponseDto>> getTasksByAuthor(
             @PathVariable Long authorId

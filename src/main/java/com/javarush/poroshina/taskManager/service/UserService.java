@@ -91,12 +91,15 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponseDto> getUsersByAuthoredTaskId(
-            Long taskId
-    ) {
-        return toResponseList(
-                userRepository.findUsersByAuthoredTaskId(taskId)
-        );
+    public UserResponseDto getUserByAuthoredTaskId(Long taskId) {
+        User user = userRepository.findUserByAuthoredTaskId(taskId)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "Author not found for task with id: " + taskId
+                        )
+                );
+
+        return toResponse(user);
     }
 
     @Transactional(readOnly = true)
@@ -114,12 +117,18 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponseDto> getUsersByExecutedTaskId(
+    public UserResponseDto getUserByExecutedTaskId(
             Long taskId
     ) {
-        return toResponseList(
-                userRepository.findUsersByExecutedTaskId(taskId)
-        );
+        User user = userRepository.findUserByExecutedTaskId(taskId)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "Executor not found for task with id: "
+                                        + taskId
+                        )
+                );
+
+        return toResponse(user);
     }
 
     @Transactional(readOnly = true)
@@ -130,11 +139,11 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponseDto> getUsersWithInProgressTasks() {
+    public List<UserResponseDto> getUsersWithTasksByStatus(
+            TaskStatus status
+    ) {
         return toResponseList(
-                userRepository.findUsersWithExecutedTasksByStatus(
-                        TaskStatus.IN_PROGRESS
-                )
+                userRepository.findUsersWithExecutedTasksByStatus(status)
         );
     }
 

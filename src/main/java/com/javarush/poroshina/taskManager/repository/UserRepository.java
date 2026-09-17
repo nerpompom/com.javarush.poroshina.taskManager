@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -25,13 +26,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUsersWithAuthoredTasks();
 
     @Query("""
-            select distinct u
-            from User u
-            join u.tasks t
-            where t.id = :taskId
-              and t.deleted = false
-            """)
-    List<User> findUsersByAuthoredTaskId(
+        select u
+        from User u
+        join u.tasks t
+        where t.id = :taskId
+          and t.deleted = false
+        """)
+    Optional<User> findUserByAuthoredTaskId(
             @Param("taskId") Long taskId
     );
 
@@ -56,13 +57,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUsersWithExecutedTasks();
 
     @Query("""
-            select distinct u
-            from User u
-            join u.executedTasks t
-            where t.id = :taskId
-              and t.deleted = false
-            """)
-    List<User> findUsersByExecutedTaskId(
+        select u
+        from User u
+        join u.executedTasks t
+        where t.id = :taskId
+          and t.deleted = false
+        """)
+    Optional<User> findUserByExecutedTaskId(
             @Param("taskId") Long taskId
     );
 

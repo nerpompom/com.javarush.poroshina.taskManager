@@ -1,5 +1,6 @@
 package com.javarush.poroshina.taskManager.controller;
 
+import com.javarush.poroshina.taskManager.model.TaskStatus;
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.service.UserService;
@@ -36,7 +37,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    //ОСТАНОВИЛАСЬ ТУТ
     @GetMapping("/with-authored-tasks")
     public ResponseEntity<List<UserResponseDto>>
     getUsersWithAuthoredTasks() {
@@ -46,12 +46,11 @@ public class UserController {
     }
 
     @GetMapping("/by-authored-task/{taskId}")
-    public ResponseEntity<List<UserResponseDto>>
-    getUsersByAuthoredTask(
+    public ResponseEntity<UserResponseDto> getUserByAuthoredTask(
             @PathVariable Long taskId
     ) {
         return ResponseEntity.ok(
-                userService.getUsersByAuthoredTaskId(taskId)
+                userService.getUserByAuthoredTaskId(taskId)
         );
     }
 
@@ -72,12 +71,11 @@ public class UserController {
     }
 
     @GetMapping("/by-executed-task/{taskId}")
-    public ResponseEntity<List<UserResponseDto>>
-    getUsersByExecutedTask(
+    public ResponseEntity<UserResponseDto> getUserByExecutedTask(
             @PathVariable Long taskId
     ) {
         return ResponseEntity.ok(
-                userService.getUsersByExecutedTaskId(taskId)
+                userService.getUserByExecutedTaskId(taskId)
         );
     }
 
@@ -89,11 +87,13 @@ public class UserController {
         );
     }
 
-    @GetMapping("/with-in-progress-tasks")
+    @GetMapping("/with-tasks-by-status")
     public ResponseEntity<List<UserResponseDto>>
-    getUsersWithInProgressTasks() {
+    getUsersWithTasksByStatus(
+            @RequestParam TaskStatus status
+    ) {
         return ResponseEntity.ok(
-                userService.getUsersWithInProgressTasks()
+                userService.getUsersWithTasksByStatus(status)
         );
     }
 
