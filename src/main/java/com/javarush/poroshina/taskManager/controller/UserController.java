@@ -31,11 +31,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUserResponses());
     }
 
-    @PostMapping
-    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto request) {
-        UserResponseDto created = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
+//    @PostMapping
+//    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto request) {
+//        UserResponseDto created = userService.createUser(request);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    }
 
     @GetMapping("/with-authored-tasks")
     public ResponseEntity<List<UserResponseDto>>

@@ -7,6 +7,7 @@ import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.model.entity.Task;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +18,14 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     //DTO для получения одного пользователя
@@ -43,16 +49,19 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public UserResponseDto createUser(UserRequestDto request) {
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
-
-        User savedUser = userRepository.save(user);
-
-        return toResponse(savedUser);
-    }
+//    @Transactional
+//    public UserResponseDto createUser(UserRequestDto request) {
+//        User user = new User();
+//
+//        user.setUsername(request.getUsername());
+//        user.setPassword(
+//                passwordEncoder.encode(request.getPassword())
+//        );
+//
+//        User savedUser = userRepository.save(user);
+//
+//        return toResponse(savedUser);
+//    }
 
     private UserResponseDto toResponse(User user) {
         List<Long> authoredTaskIds = user.getTasks()
