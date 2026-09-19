@@ -2,6 +2,7 @@ package com.javarush.poroshina.taskManager.service;
 
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
+import com.javarush.poroshina.taskManager.model.entity.Role;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +39,7 @@ public class AuthService {
         user.setPassword(
                 passwordEncoder.encode(request.getPassword())
         );
+        user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
 

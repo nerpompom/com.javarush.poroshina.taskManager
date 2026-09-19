@@ -56,4 +56,17 @@ public class JwtService {
     public long getExpirationSeconds() {
         return expirationSeconds;
     }
+
+    public boolean isTokenValid(String token) {
+        try {
+            parse(token);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public String getUsername(String token) {
+        return parse(token).getSubject();
+    }
 }

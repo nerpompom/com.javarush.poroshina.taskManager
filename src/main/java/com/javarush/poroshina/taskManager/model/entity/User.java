@@ -1,5 +1,5 @@
 package com.javarush.poroshina.taskManager.model.entity;
-
+//Проверить что в геттерах сеттерах везде одинаковые типы
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -31,6 +31,10 @@ public class User {
             fetch = FetchType.LAZY
     )
     private List<Task> executedTasks = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     public Long getId() {
         return id;
@@ -70,5 +74,13 @@ public class User {
 
     public void setExecutedTasks(List<Task> executedTasks) {
         this.executedTasks = executedTasks;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

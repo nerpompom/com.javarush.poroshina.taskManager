@@ -40,11 +40,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> register(
-            @Valid @RequestBody UserRequestDto request
-    ) {
-        UserResponseDto created =
-                authService.register(request);
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRequestDto request) {
+        UserResponseDto created = authService.register(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -52,27 +49,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(
-            @RequestBody AuthRequestDto request
-    ) {
-        User user = userRepository.findByUsername(
-                request.getUsername()
-        );
+    public ResponseEntity<AuthResponseDto> login(@RequestBody AuthRequestDto request) {
+        User user = userRepository.findByUsername(request.getUsername());
 
-        if (user == null
-                || !passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        )) {
-            throw new InvalidCredentialsException(
-                    "Invalid username or password"
-            );
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid username or password");
         }
 
-        String token = jwtService.createToken(
-                user.getId(),
-                user.getUsername()
-        );
+        String token = jwtService.createToken(user.getId(), user.getUsername());
 
         return ResponseEntity.ok(
                 new AuthResponseDto(token)

@@ -1,11 +1,8 @@
 package com.javarush.poroshina.taskManager.controller;
 
 import com.javarush.poroshina.taskManager.model.TaskStatus;
-import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.service.UserService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,12 +27,6 @@ public class UserController {
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUserResponses());
     }
-
-//    @PostMapping
-//    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto request) {
-//        UserResponseDto created = userService.createUser(request);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-//    }
 
     @GetMapping("/with-authored-tasks")
     public ResponseEntity<List<UserResponseDto>>
