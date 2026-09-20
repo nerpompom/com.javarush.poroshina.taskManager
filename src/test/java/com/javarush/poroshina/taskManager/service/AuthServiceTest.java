@@ -6,7 +6,7 @@ import com.javarush.poroshina.taskManager.model.dto.AuthRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.AuthResponseDto;
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
-import com.javarush.poroshina.taskManager.model.entity.Role;
+import com.javarush.poroshina.taskManager.model.Role;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import com.javarush.poroshina.taskManager.security.JwtService;
