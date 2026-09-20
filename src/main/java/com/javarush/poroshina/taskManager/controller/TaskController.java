@@ -45,7 +45,8 @@ public class TaskController {
     public ResponseEntity<TaskResponseDto> createTask(
             @Valid @RequestBody TaskCreateRequestDto request
     ) {
-        TaskResponseDto created = taskService.createTask(request);
+        TaskResponseDto created =
+                taskService.createTask(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

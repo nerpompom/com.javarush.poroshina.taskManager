@@ -12,6 +12,8 @@ import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.TaskRepository;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 
 import org.springframework.stereotype.Service;
@@ -55,7 +57,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponseDto createTask(TaskCreateRequestDto request) {
-        User author = getUserById(request.getAuthorId());
+        User author = getCurrentUser();
 
         Task task = new Task();
         task.setDescription(request.getDescription());
@@ -321,5 +323,31 @@ public class TaskService {
                                 description.trim()
                         )
         );
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()) {
+            throw new IllegalStateException(
+                    "Current user is not authenticated"
+            );
+        }
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username);
+
+        if (user == null) {
+            throw new UserNotFoundException(
+                    "Authenticated user was not found"
+            );
+        }
+
+        return user;
     }
 }

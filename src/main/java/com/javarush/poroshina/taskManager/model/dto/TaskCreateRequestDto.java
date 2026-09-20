@@ -11,10 +11,6 @@ public class TaskCreateRequestDto {
     @Size(max = 1000, message = "Description must be at most 1000 characters")
     private String description;
 
-    //ЭТО СЛЕДУЮЩИЙ ШАГ Если автор будет определяться из авторизованного пользователя, поле authorId из запроса лучше убрать и получать пользователя из SecurityContext.
-    @NotNull(message = "Author id must not be null")
-    private Long authorId;
-
     public TaskCreateRequestDto() {
     }
 
@@ -26,12 +22,4 @@ public class TaskCreateRequestDto {
         this.description = description;
     }
 
-
-    public Long getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(Long authorId) {
-        this.authorId = authorId;
-    }
 }
