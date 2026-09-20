@@ -1,0 +1,52 @@
+stages:
+  - test
+  - build
+  - dockerize
+  - deploy
+
+# JDK 21
+variables:
+  MAVEN_IMAGE: maven:3.9.9-eclipse-temurin-21
+  DOCKER_IMAGE_NAME: $DOCKER_USERNAME/task-manager
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+
+test-job:
+  stage: test
+  image: $MAVEN_IMAGE
+  script:
+    - mvn test
+
+build-job:
+  stage: build
+  image: $MAVEN_IMAGE
+  script:
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+
+dockerize-job:
+  stage: dockerize
+  image: docker:24.0.9
+  services:
+    - docker:24.0.9-dind
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+
+deploy-job:
+  stage: deploy
+  image: ubuntu:latest
+  rules:
+    - if: $DEPLOY_HOST
+  before_script:
+    - apt-get update && apt-get install -y openssh-client
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+  script:
+    - ssh -o StrictHostKeyChecking=accept-new $DEPLOY_USER@$DEPLOY_HOST "docker pull $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA && docker stop task-manager || true && docker rm task-manager || true && docker run -d --name task-manager -p 8080:8080 $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
