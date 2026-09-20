@@ -14,6 +14,9 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
+    volumes:
+      - ./logs:/app/logs
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,10 +101,76 @@ services:
     networks:
       - task-manager-network
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+
+    container_name: task-manager-elasticsearch
+
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+
+    ports:
+      - "9200:9200"
+
+    volumes:
+      - task-manager-elasticsearch-data:/usr/share/elasticsearch/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+    networks:
+      - task-manager-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.3
+
+    container_name: task-manager-logstash
+
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+
+    volumes:
+      - ./elk/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./elk/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logs:/usr/share/logstash/app-logs:ro
+
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    networks:
+      - task-manager-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+
+    container_name: task-manager-kibana
+
+    ports:
+      - "5601:5601"
+
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    networks:
+      - task-manager-network
+
 volumes:
   task-manager-postgres-data:
   task-manager-prometheus-data:
   task-manager-grafana-data:
+  task-manager-elasticsearch-data:
 
 networks:
   task-manager-network:
