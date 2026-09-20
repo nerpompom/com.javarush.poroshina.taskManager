@@ -25,4 +25,4 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics #"*" # prometeus - если подключить, то обычные ручки перестают работать. Если подключать то наверное надо к графане дальше отдавать
+        include: health,info,metrics,prometheus

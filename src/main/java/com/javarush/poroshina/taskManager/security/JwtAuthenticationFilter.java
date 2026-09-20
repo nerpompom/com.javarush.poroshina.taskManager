@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter
         String path = request.getServletPath();
 
         return path.equals("/actuator/health")
+                || path.equals("/actuator/prometheus")
                 || path.startsWith("/api/auth/");
     }
 

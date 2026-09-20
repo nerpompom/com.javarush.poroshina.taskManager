@@ -68,8 +68,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**")
                         .permitAll()
 
-                        // Health доступен без JWT
-                        .requestMatchers("/actuator/health")
+                        // Health и scrape Prometheus — без JWT
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/prometheus"
+                        )
                         .permitAll()
 
                         // Остальные Actuator endpoints —

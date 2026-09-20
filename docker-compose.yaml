@@ -52,8 +52,56 @@ services:
     networks:
       - task-manager-network
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+
+    container_name: task-manager-prometheus
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - task-manager-prometheus-data:/prometheus
+
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+
+    depends_on:
+      - app
+
+    networks:
+      - task-manager-network
+
+  grafana:
+    image: grafana/grafana:11.4.0
+
+    container_name: task-manager-grafana
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - task-manager-grafana-data:/var/lib/grafana
+
+    depends_on:
+      - prometheus
+
+    networks:
+      - task-manager-network
+
 volumes:
   task-manager-postgres-data:
+  task-manager-prometheus-data:
+  task-manager-grafana-data:
 
 networks:
   task-manager-network:
