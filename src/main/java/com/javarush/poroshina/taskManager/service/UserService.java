@@ -2,7 +2,6 @@ package com.javarush.poroshina.taskManager.service;
 
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
 import com.javarush.poroshina.taskManager.model.TaskStatus;
-import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.model.entity.Task;
 import com.javarush.poroshina.taskManager.model.entity.User;
@@ -48,20 +47,6 @@ public class UserService {
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
-
-//    @Transactional
-//    public UserResponseDto createUser(UserRequestDto request) {
-//        User user = new User();
-//
-//        user.setUsername(request.getUsername());
-//        user.setPassword(
-//                passwordEncoder.encode(request.getPassword())
-//        );
-//
-//        User savedUser = userRepository.save(user);
-//
-//        return toResponse(savedUser);
-//    }
 
     private UserResponseDto toResponse(User user) {
         List<Long> authoredTaskIds = user.getTasks()
