@@ -1,7 +1,6 @@
 package com.javarush.poroshina.taskManager.model.dto;
 
 import com.javarush.poroshina.taskManager.model.TaskStatus;
-
 import java.time.Instant;
 
 public class TaskResponseDto {
@@ -9,13 +8,10 @@ public class TaskResponseDto {
     private final Long id;
     private final String description;
     private final TaskStatus taskStatus;
-
     private final Long authorId;
     private final String authorUsername;
-
     private final Long executorId;
     private final String executorUsername;
-
     private final Instant createdAt;
     private final Instant updatedAt;
     private final Instant completedAt;

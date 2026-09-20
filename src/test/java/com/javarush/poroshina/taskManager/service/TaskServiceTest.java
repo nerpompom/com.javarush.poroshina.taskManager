@@ -21,16 +21,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,17 +51,8 @@ class TaskServiceTest {
 
     @BeforeEach
     void setUp() {
-        author = createUser(
-                1L,
-                "author"
-        );
-
-        task = createTask(
-                10L,
-                "Test task",
-                TaskStatus.CREATED,
-                author
-        );
+        author = createUser(1L, "author");
+        task = createTask(10L, "Test task", TaskStatus.CREATED, author);
     }
 
     @AfterEach
@@ -74,269 +62,119 @@ class TaskServiceTest {
 
     @Test
     void shouldReturnTaskById() {
-        // Arrange
-        when(taskRepository.findByIdAndDeletedFalse(10L))
-                .thenReturn(Optional.of(task));
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        TaskResponseDto result = taskService.getTaskResponseById(10L);
 
-        // Act
-        TaskResponseDto result =
-                taskService.getTaskResponseById(10L);
-
-        // Assert
         assertNotNull(result);
         assertEquals(10L, result.getId());
-        assertEquals(
-                "Test task",
-                result.getDescription()
-        );
-        assertEquals(
-                TaskStatus.CREATED,
-                result.getTaskStatus()
-        );
-        assertEquals(
-                1L,
-                result.getAuthorId()
-        );
-        assertEquals(
-                "author",
-                result.getAuthorUsername()
-        );
+        assertEquals("Test task", result.getDescription());
+        assertEquals(TaskStatus.CREATED, result.getTaskStatus());
+        assertEquals(1L, result.getAuthorId());
+        assertEquals("author", result.getAuthorUsername());
 
-        verify(taskRepository)
-                .findByIdAndDeletedFalse(10L);
+        verify(taskRepository).findByIdAndDeletedFalse(10L);
     }
 
     @Test
     void shouldThrowExceptionWhenTaskDoesNotExist() {
-        // Arrange
-        when(taskRepository.findByIdAndDeletedFalse(999L))
-                .thenReturn(Optional.empty());
+        when(taskRepository.findByIdAndDeletedFalse(999L)).thenReturn(Optional.empty());
 
-        // Act and Assert
-        TaskNotFoundException exception =
-                assertThrows(
-                        TaskNotFoundException.class,
-                        () -> taskService.getTaskResponseById(999L)
-                );
+        TaskNotFoundException exception = assertThrows(TaskNotFoundException.class, () -> taskService.getTaskResponseById(999L));
 
-        assertEquals(
-                "Task not found with id: 999",
-                exception.getMessage()
-        );
+        assertEquals("Task not found with id: 999", exception.getMessage());
 
-        verify(taskRepository)
-                .findByIdAndDeletedFalse(999L);
+        verify(taskRepository).findByIdAndDeletedFalse(999L);
     }
 
     @Test
     void shouldCreateTaskWithCurrentUserAsAuthor() {
-        // Arrange
         setAuthenticatedUser("author");
 
-        TaskCreateRequestDto request =
-                new TaskCreateRequestDto();
+        TaskCreateRequestDto request = new TaskCreateRequestDto();
 
         request.setDescription("New task");
 
-        when(userRepository.findByUsername("author"))
-                .thenReturn(author);
+        when(userRepository.findByUsername("author")).thenReturn(author);
 
-        when(taskRepository.save(any(Task.class)))
-                .thenAnswer(invocation -> {
-                    Task savedTask =
-                            invocation.getArgument(0);
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
+            Task savedTask = invocation.getArgument(0);
+            savedTask.setId(20L);
+            return savedTask;
+        });
 
-                    savedTask.setId(20L);
+        TaskResponseDto result = taskService.createTask(request);
 
-                    return savedTask;
-                });
-
-        // Act
-        TaskResponseDto result =
-                taskService.createTask(request);
-
-        // Assert
         assertNotNull(result);
         assertEquals(20L, result.getId());
-        assertEquals(
-                "New task",
-                result.getDescription()
-        );
-        assertEquals(
-                TaskStatus.CREATED,
-                result.getTaskStatus()
-        );
-        assertEquals(
-                1L,
-                result.getAuthorId()
-        );
-        assertEquals(
-                "author",
-                result.getAuthorUsername()
-        );
+        assertEquals("New task", result.getDescription());
+        assertEquals(TaskStatus.CREATED, result.getTaskStatus());
+        assertEquals(1L, result.getAuthorId());
+        assertEquals("author", result.getAuthorUsername());
 
-        ArgumentCaptor<Task> taskCaptor =
-                ArgumentCaptor.forClass(Task.class);
+        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
 
-        verify(taskRepository)
-                .save(taskCaptor.capture());
+        verify(taskRepository).save(taskCaptor.capture());
 
         Task savedTask = taskCaptor.getValue();
 
-        assertEquals(
-                "New task",
-                savedTask.getDescription()
-        );
-        assertEquals(
-                TaskStatus.CREATED,
-                savedTask.getTaskStatus()
-        );
-        assertEquals(
-                author,
-                savedTask.getAuthor()
-        );
-        assertEquals(
-                false,
-                savedTask.isDeleted()
-        );
+        assertEquals("New task", savedTask.getDescription());
+        assertEquals(TaskStatus.CREATED, savedTask.getTaskStatus());
+        assertEquals(author, savedTask.getAuthor());
+        assertEquals(false, savedTask.isDeleted());
 
-        verify(eventPublisher)
-                .publishEvent(any(TaskCreatedEvent.class));
+        verify(eventPublisher).publishEvent(any(TaskCreatedEvent.class));
     }
 
     @Test
     void shouldUpdateTaskToInProgressAndThenToDone() {
-        // Arrange
-        User executor = createUser(
-                2L,
-                "executor"
-        );
+        User executor = createUser(2L, "executor");
 
-        TaskUpdateRequestDto inProgressRequest =
-                new TaskUpdateRequestDto();
+        TaskUpdateRequestDto inProgressRequest = new TaskUpdateRequestDto();
 
-        inProgressRequest.setDescription(
-                "Task in progress"
-        );
-        inProgressRequest.setTaskStatus(
-                TaskStatus.IN_PROGRESS
-        );
+        inProgressRequest.setDescription("Task in progress");
+        inProgressRequest.setTaskStatus(TaskStatus.IN_PROGRESS);
         inProgressRequest.setExecutorId(2L);
 
-        when(taskRepository.findByIdAndDeletedFalse(10L))
-                .thenReturn(Optional.of(task));
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(executor));
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userRepository.findById(2L))
-                .thenReturn(Optional.of(executor));
+        TaskResponseDto inProgressResult = taskService.updateTask(10L, inProgressRequest);
 
-        when(taskRepository.save(any(Task.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0)
-                );
+        assertEquals(TaskStatus.IN_PROGRESS, inProgressResult.getTaskStatus());
+        assertEquals("Task in progress", inProgressResult.getDescription());
+        assertEquals(2L, inProgressResult.getExecutorId());
+        assertEquals("executor", inProgressResult.getExecutorUsername());
+        assertNotNull(inProgressResult.getUpdatedAt());
+        assertEquals(null, inProgressResult.getCompletedAt());
 
-        // Act: CREATED -> IN_PROGRESS
-        TaskResponseDto inProgressResult =
-                taskService.updateTask(
-                        10L,
-                        inProgressRequest
-                );
+        TaskUpdateRequestDto doneRequest = new TaskUpdateRequestDto();
 
-        // Assert
-        assertEquals(
-                TaskStatus.IN_PROGRESS,
-                inProgressResult.getTaskStatus()
-        );
-        assertEquals(
-                "Task in progress",
-                inProgressResult.getDescription()
-        );
-        assertEquals(
-                2L,
-                inProgressResult.getExecutorId()
-        );
-        assertEquals(
-                "executor",
-                inProgressResult.getExecutorUsername()
-        );
-        assertNotNull(
-                inProgressResult.getUpdatedAt()
-        );
-        assertEquals(
-                null,
-                inProgressResult.getCompletedAt()
-        );
-
-        // Arrange: IN_PROGRESS -> DONE
-        TaskUpdateRequestDto doneRequest =
-                new TaskUpdateRequestDto();
-
-        doneRequest.setDescription(
-                "Task completed"
-        );
-        doneRequest.setTaskStatus(
-                TaskStatus.DONE
-        );
+        doneRequest.setDescription("Task completed");
+        doneRequest.setTaskStatus(TaskStatus.DONE);
         doneRequest.setExecutorId(2L);
 
-        // Act: IN_PROGRESS -> DONE
-        TaskResponseDto doneResult =
-                taskService.updateTask(
-                        10L,
-                        doneRequest
-                );
+        TaskResponseDto doneResult = taskService.updateTask(10L, doneRequest);
 
-        // Assert
-        assertEquals(
-                TaskStatus.DONE,
-                doneResult.getTaskStatus()
-        );
-        assertEquals(
-                "Task completed",
-                doneResult.getDescription()
-        );
-        assertEquals(
-                2L,
-                doneResult.getExecutorId()
-        );
-        assertEquals(
-                "executor",
-                doneResult.getExecutorUsername()
-        );
-        assertNotNull(
-                doneResult.getUpdatedAt()
-        );
-        assertNotNull(
-                doneResult.getCompletedAt()
-        );
+        assertEquals(TaskStatus.DONE, doneResult.getTaskStatus());
+        assertEquals("Task completed", doneResult.getDescription());
+        assertEquals(2L, doneResult.getExecutorId());
+        assertEquals("executor", doneResult.getExecutorUsername());
+        assertNotNull(doneResult.getUpdatedAt());
+        assertNotNull(doneResult.getCompletedAt());
 
-        verify(taskRepository, org.mockito.Mockito.times(2))
-                .findByIdAndDeletedFalse(10L);
-
-        verify(userRepository, org.mockito.Mockito.times(2))
-                .findById(2L);
-
-        verify(taskRepository, org.mockito.Mockito.times(2))
-                .save(any(Task.class));
+        verify(taskRepository, org.mockito.Mockito.times(2)).findByIdAndDeletedFalse(10L);
+        verify(userRepository, org.mockito.Mockito.times(2)).findById(2L);
+        verify(taskRepository, org.mockito.Mockito.times(2)).save(any(Task.class));
     }
 
-    private void setAuthenticatedUser(
-            String username
-    ) {
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        List.of()
-                );
+    private void setAuthenticatedUser(String username) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, List.of());
 
-        SecurityContextHolder.getContext()
-                .setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private User createUser(
-            Long id,
-            String username
-    ) {
+    private User createUser(Long id, String username) {
         User user = new User();
         user.setId(id);
         user.setUsername(username);
@@ -346,11 +184,7 @@ class TaskServiceTest {
         return user;
     }
 
-    private Task createTask(
-            Long id,
-            String description,
-            TaskStatus status,
-            User author
+    private Task createTask(Long id, String description, TaskStatus status, User author
     ) {
         Task task = new Task();
         task.setId(id);

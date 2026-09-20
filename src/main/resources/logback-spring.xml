@@ -1,8 +1,6 @@
 <configuration>
-
     <appender name="CONSOLE"
               class="ch.qos.logback.core.ConsoleAppender">
-
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
@@ -11,41 +9,25 @@
 
     <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-
-        <!-- Текущий файл логов -->
         <file>logs/spring-boot-app.log</file>
-
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
 
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-
-            <!-- Архивы создаются по дате и номеру части -->
             <fileNamePattern>
                 logs/archive/spring-boot-app.%d{yyyy-MM-dd}.%i.log.gz
             </fileNamePattern>
-
-            <!-- Максимальный размер одного файла -->
             <maxFileSize>10MB</maxFileSize>
-
-            <!-- Хранить архивы максимум 7 дней -->
             <maxHistory>7</maxHistory>
-
-            <!-- Общий размер архивов максимум 100 MB -->
             <totalSizeCap>100MB</totalSizeCap>
-
-            <!-- Очищать старые архивы при запуске -->
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
-
         </rollingPolicy>
     </appender>
-
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>
-
 </configuration>

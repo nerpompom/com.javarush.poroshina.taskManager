@@ -1,16 +1,15 @@
 package com.javarush.poroshina.taskManager.security;
 
+import com.javarush.poroshina.taskManager.config.AppConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 
 @Component
-public class JwtAccessDeniedHandler
-        implements AccessDeniedHandler {
+public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(
@@ -18,16 +17,9 @@ public class JwtAccessDeniedHandler
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException {
-
-        response.setStatus(
-                HttpServletResponse.SC_FORBIDDEN
-        );
-
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("text/plain");
         response.setCharacterEncoding("UTF-8");
-
-        response.getWriter().write(
-                "You do not have permission to perform this action"
-        );
+        response.getWriter().write(AppConstants.NO_PERMISSION_MESSAGE);
     }
 }

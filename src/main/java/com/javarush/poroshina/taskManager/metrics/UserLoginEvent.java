@@ -1,7 +1,6 @@
 package com.javarush.poroshina.taskManager.metrics;
 
 public class UserLoginEvent {
-
     private final Long userId;
 
     public UserLoginEvent(Long userId) {

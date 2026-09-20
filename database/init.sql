@@ -25,8 +25,7 @@ CREATE TABLE IF NOT EXISTS tasks (
                                              REFERENCES users (id)
 );
 
-INSERT INTO users
-(
+INSERT INTO users (
     username,
     password,
     role
@@ -43,8 +42,7 @@ VALUES
         'USER'
     );
 
-INSERT INTO tasks
-(
+INSERT INTO tasks (
     description,
     task_status,
     author_id,
@@ -63,7 +61,7 @@ VALUES
         NOW(),
         NULL,
         NULL,
-        false
+        FALSE
     ),
     (
         'Правки по мп',
@@ -73,7 +71,7 @@ VALUES
         NOW(),
         NULL,
         NULL,
-        false
+        FALSE
     ),
     (
         'Правки по лк',
@@ -83,5 +81,5 @@ VALUES
         NOW(),
         NULL,
         NOW(),
-        false
+        FALSE
     );

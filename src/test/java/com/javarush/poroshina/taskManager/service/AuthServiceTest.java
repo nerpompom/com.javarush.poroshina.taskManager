@@ -1,5 +1,6 @@
 package com.javarush.poroshina.taskManager.service;
 
+import com.javarush.poroshina.taskManager.config.AppConstants;
 import com.javarush.poroshina.taskManager.exception.InvalidCredentialsException;
 import com.javarush.poroshina.taskManager.metrics.UserLoginEvent;
 import com.javarush.poroshina.taskManager.model.dto.AuthRequestDto;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,7 +47,6 @@ class AuthServiceTest {
 
     @Test
     void shouldRegisterUserWithValidData() {
-        // Arrange
         UserRequestDto request = new UserRequestDto();
         request.setUsername("new_user");
         request.setPassword("password123");
@@ -60,41 +59,25 @@ class AuthServiceTest {
 
         when(userRepository.findByUsername("new_user"))
                 .thenReturn(null);
-
         when(passwordEncoder.encode("password123"))
                 .thenReturn("encoded-password");
-
         when(userRepository.save(any(User.class)))
                 .thenReturn(savedUser);
 
-        // Act
-        UserResponseDto result =
-                authService.register(request);
+        UserResponseDto result = authService.register(request);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals(
-                "new_user",
-                result.getUsername()
-        );
+        assertEquals("new_user", result.getUsername());
 
-        verify(userRepository)
-                .findByUsername("new_user");
-
-        verify(passwordEncoder)
-                .encode("password123");
-
-        verify(userRepository)
-                .save(any(User.class));
-
-        verify(eventPublisher, never())
-                .publishEvent(any());
+        verify(userRepository).findByUsername("new_user");
+        verify(passwordEncoder).encode("password123");
+        verify(userRepository).save(any(User.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void shouldThrowExceptionWhenUsernameAlreadyTaken() {
-        // Arrange
         UserRequestDto request = new UserRequestDto();
         request.setUsername("existing_user");
         request.setPassword("password123");
@@ -103,37 +86,20 @@ class AuthServiceTest {
         existingUser.setId(1L);
         existingUser.setUsername("existing_user");
 
-        when(userRepository.findByUsername("existing_user"))
-                .thenReturn(existingUser);
+        when(userRepository.findByUsername("existing_user")).thenReturn(existingUser);
 
-        // Act
-        IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> authService.register(request)
-                );
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.register(request));
 
-        // Assert
-        assertEquals(
-                "Username is already taken",
-                exception.getMessage()
-        );
+        assertEquals(AppConstants.USERNAME_EXIST_MESSAGE, exception.getMessage());
 
-        verify(userRepository)
-                .findByUsername("existing_user");
-
-        verify(userRepository, never())
-                .save(any(User.class));
-
-        verify(passwordEncoder, never())
-                .encode(any());
-
+        verify(userRepository).findByUsername("existing_user");
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(any());
         verifyNoInteractions(eventPublisher);
     }
 
     @Test
     void shouldLoginUserWithValidCredentials() {
-        // Arrange
         AuthRequestDto request = new AuthRequestDto();
         request.setUsername("test_user");
         request.setPassword("password123");
@@ -144,49 +110,23 @@ class AuthServiceTest {
         user.setPassword("encoded-password");
         user.setRole(Role.USER);
 
-        when(userRepository.findByUsername("test_user"))
-                .thenReturn(user);
+        when(userRepository.findByUsername("test_user")).thenReturn(user);
+        when(passwordEncoder.matches("password123", "encoded-password")).thenReturn(true);
+        when(jwtService.createToken(1L, "test_user")).thenReturn("test-jwt-token");
 
-        when(passwordEncoder.matches(
-                "password123",
-                "encoded-password"
-        )).thenReturn(true);
+        AuthResponseDto result = authService.login(request);
 
-        when(jwtService.createToken(
-                1L,
-                "test_user"
-        )).thenReturn("test-jwt-token");
-
-        // Act
-        AuthResponseDto result =
-                authService.login(request);
-
-        // Assert
         assertNotNull(result);
-        assertEquals(
-                "test-jwt-token",
-                result.getToken()
-        );
+        assertEquals("test-jwt-token", result.getToken());
 
-        verify(userRepository)
-                .findByUsername("test_user");
-
-        verify(passwordEncoder)
-                .matches(
-                        "password123",
-                        "encoded-password"
-                );
-
-        verify(jwtService)
-                .createToken(1L, "test_user");
-
-        verify(eventPublisher)
-                .publishEvent(any(UserLoginEvent.class));
+        verify(userRepository).findByUsername("test_user");
+        verify(passwordEncoder).matches("password123", "encoded-password");
+        verify(jwtService).createToken(1L, "test_user");
+        verify(eventPublisher).publishEvent(any(UserLoginEvent.class));
     }
 
     @Test
     void shouldThrowExceptionWhenLoginCredentialsAreInvalid() {
-        // Arrange
         AuthRequestDto request = new AuthRequestDto();
         request.setUsername("test_user");
         request.setPassword("wrong-password");
@@ -196,39 +136,17 @@ class AuthServiceTest {
         user.setUsername("test_user");
         user.setPassword("encoded-password");
 
-        when(userRepository.findByUsername("test_user"))
-                .thenReturn(user);
+        when(userRepository.findByUsername("test_user")).thenReturn(user);
+        when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
 
-        when(passwordEncoder.matches(
-                "wrong-password",
-                "encoded-password"
-        )).thenReturn(false);
+        InvalidCredentialsException exception = assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
 
-        // Act
-        InvalidCredentialsException exception =
-                assertThrows(
-                        InvalidCredentialsException.class,
-                        () -> authService.login(request)
-                );
+        assertEquals(AppConstants.INVALID_USERNAME_OR_PASSWORD_MESSAGE, exception.getMessage());
 
-        // Assert
-        assertEquals(
-                "Invalid username or password",
-                exception.getMessage()
-        );
+        verify(userRepository).findByUsername("test_user");
+        verify(passwordEncoder).matches("wrong-password", "encoded-password");
 
-        verify(userRepository)
-                .findByUsername("test_user");
-
-        verify(passwordEncoder)
-                .matches(
-                        "wrong-password",
-                        "encoded-password"
-                );
-
-        verify(jwtService, never())
-                .createToken(any(), any());
-
+        verify(jwtService, never()).createToken(any(), any());
         verifyNoInteractions(eventPublisher);
     }
 }

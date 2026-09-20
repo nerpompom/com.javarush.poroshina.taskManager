@@ -1,5 +1,6 @@
 package com.javarush.poroshina.taskManager.service;
 
+import com.javarush.poroshina.taskManager.config.AppConstants;
 import com.javarush.poroshina.taskManager.exception.TaskNotFoundException;
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
 import com.javarush.poroshina.taskManager.metrics.TaskCreatedEvent;
@@ -14,17 +15,13 @@ import com.javarush.poroshina.taskManager.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class TaskService {
@@ -70,53 +67,34 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
-        eventPublisher.publishEvent(
-                new TaskCreatedEvent()
-        );
+        eventPublisher.publishEvent(new TaskCreatedEvent());
         return toResponse(savedTask);
     }
 
     @Transactional
-    public TaskResponseDto updateTask(
-            Long id,
-            TaskUpdateRequestDto request
-    ) {
+    public TaskResponseDto updateTask(Long id, TaskUpdateRequestDto request) {
         Task task = getTaskById(id);
 
         if (task.isDeleted()) {
-            throw new TaskNotFoundException(
-                    "Task not found with id: " + id
-            );
+            throw new TaskNotFoundException(AppConstants.TASK_NOT_FOUND_MESSAGE + id);
         }
 
         TaskStatus newStatus = request.getTaskStatus();
 
-        if (newStatus == TaskStatus.IN_PROGRESS
-                && request.getExecutorId() == null) {
-            throw new IllegalStateException(
-                    "Executor id is required for IN_PROGRESS status"
-            );
+        if (newStatus == TaskStatus.IN_PROGRESS && request.getExecutorId() == null) {
+            throw new IllegalStateException(AppConstants.EXECUTOR_ID_REQUIRED_FOR_IN_PROGRESS_MESSAGE);
         }
 
-        if (newStatus == TaskStatus.CREATED
-                && request.getExecutorId() != null) {
-            throw new IllegalStateException(
-                    "Executor id must be null for CREATED status"
-            );
+        if (newStatus == TaskStatus.CREATED && request.getExecutorId() != null) {
+            throw new IllegalStateException(AppConstants.EXECUTOR_ID_MUST_BE_NULL_FOR_CREATED_MESSAGE);
         }
 
-        if (newStatus == TaskStatus.DONE
-                && request.getExecutorId() == null) {
-            throw new IllegalStateException(
-                    "Executor id is required for DONE status"
-            );
+        if (newStatus == TaskStatus.DONE && request.getExecutorId() == null) {
+            throw new IllegalStateException(AppConstants.EXECUTOR_ID_REQUIRED_FOR_DONE_MESSAGE);
         }
 
-        if (newStatus == TaskStatus.DONE
-                && task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
-            throw new IllegalStateException(
-                    "Only task in progress can be completed"
-            );
+        if (newStatus == TaskStatus.DONE && task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
+            throw new IllegalStateException(AppConstants.ONLY_IN_PROGRESS_TASK_CAN_BE_COMPLETED_MESSAGE);
         }
 
         task.setDescription(request.getDescription());
@@ -142,7 +120,6 @@ public class TaskService {
         }
 
         task.setUpdatedAt(Instant.now());
-
         Task savedTask = taskRepository.save(task);
 
         return toResponse(savedTask);
@@ -153,35 +130,24 @@ public class TaskService {
         Task task = getTaskById(id);
 
         if (task.isDeleted()) {
-            throw new TaskNotFoundException(
-                    "Task not found with id: " + id
-            );
+            throw new TaskNotFoundException(AppConstants.TASK_NOT_FOUND_MESSAGE + id);
         }
 
         task.setDeleted(true);
         task.setExecutor(null);
         task.setCompletedAt(null);
         task.setUpdatedAt(Instant.now());
-
         taskRepository.save(task);
     }
 
     private Task getTaskById(Long id) {
         return taskRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() ->
-                        new TaskNotFoundException(
-                                "Task not found with id: " + id
-                        )
-                );
+                .orElseThrow(() -> new TaskNotFoundException(AppConstants.TASK_NOT_FOUND_MESSAGE + id));
     }
 
     private User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User not found with id: " + id
-                        )
-                );
+                .orElseThrow(() -> new UserNotFoundException(AppConstants.USER_NOT_FOUND_MESSAGE + id));
     }
 
     private TaskResponseDto toResponse(Task task) {
@@ -203,9 +169,7 @@ public class TaskService {
         );
     }
 
-    private List<TaskResponseDto> toResponseList(
-            List<Task> tasks
-    ) {
+    private List<TaskResponseDto> toResponseList(List<Task> tasks) {
         return tasks.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -215,127 +179,73 @@ public class TaskService {
     public List<TaskResponseDto> getTasksByAuthorId(Long authorId) {
         getUserById(authorId);
 
-        return toResponseList(
-                taskRepository.findByAuthor_IdAndDeletedFalse(authorId)
-        );
+        return toResponseList(taskRepository.findByAuthor_IdAndDeletedFalse(authorId));
     }
 
     @Transactional(readOnly = true)
     public List<TaskResponseDto> getTasksByExecutorId(Long executorId) {
         getUserById(executorId);
 
-        return toResponseList(
-                taskRepository.findByExecutor_IdAndDeletedFalse(executorId)
-        );
+        return toResponseList(taskRepository.findByExecutor_IdAndDeletedFalse(executorId));
     }
 
     @Transactional(readOnly = true)
     public List<TaskResponseDto> getTasksWithoutExecutor() {
-        return toResponseList(
-                taskRepository.findByExecutorIsNullAndDeletedFalse()
-        );
+        return toResponseList(taskRepository.findByExecutorIsNullAndDeletedFalse());
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDto> getTasksByStatus(
-            TaskStatus taskStatus
-    ) {
-        return toResponseList(
-                taskRepository.findByTaskStatusAndDeletedFalse(
-                        taskStatus
-                )
-        );
+    public List<TaskResponseDto> getTasksByStatus(TaskStatus taskStatus) {
+        return toResponseList(taskRepository.findByTaskStatusAndDeletedFalse(taskStatus));
     }
 
-    private Instant toStartOfDay(
-            LocalDate date,
-            ZoneId zoneId
-    ) {
+    private Instant toStartOfDay(LocalDate date, ZoneId zoneId) {
         return date
                 .atStartOfDay(zoneId)
                 .toInstant();
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDto> getTasksByCreatedDate(
-            LocalDate date,
-            ZoneId zoneId
+    public List<TaskResponseDto> getTasksByCreatedDate(LocalDate date, ZoneId zoneId) {
+        Instant start = toStartOfDay(date, zoneId);
+        Instant end = toStartOfDay(date.plusDays(1), zoneId);
+
+        return toResponseList(taskRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndDeletedFalse(start, end));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponseDto> getTasksByUpdatedDate(LocalDate date, ZoneId zoneId
     ) {
         Instant start = toStartOfDay(date, zoneId);
         Instant end = toStartOfDay(date.plusDays(1), zoneId);
 
-        return toResponseList(
-                taskRepository
-                        .findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndDeletedFalse(
-                                start,
-                                end
-                        )
-        );
+        return toResponseList(taskRepository.findByUpdatedAtGreaterThanEqualAndUpdatedAtLessThanAndDeletedFalse(start, end));
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDto> getTasksByUpdatedDate(
-            LocalDate date,
-            ZoneId zoneId
-    ) {
+    public List<TaskResponseDto> getTasksByCompletedDate(LocalDate date, ZoneId zoneId) {
         Instant start = toStartOfDay(date, zoneId);
         Instant end = toStartOfDay(date.plusDays(1), zoneId);
 
-        return toResponseList(
-                taskRepository
-                        .findByUpdatedAtGreaterThanEqualAndUpdatedAtLessThanAndDeletedFalse(
-                                start,
-                                end
-                        )
-        );
+        return toResponseList(taskRepository.findByCompletedAtGreaterThanEqualAndCompletedAtLessThanAndDeletedFalse(start, end));
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponseDto> getTasksByCompletedDate(
-            LocalDate date,
-            ZoneId zoneId
-    ) {
-        Instant start = toStartOfDay(date, zoneId);
-        Instant end = toStartOfDay(date.plusDays(1), zoneId);
-
-        return toResponseList(
-                taskRepository
-                        .findByCompletedAtGreaterThanEqualAndCompletedAtLessThanAndDeletedFalse(
-                                start,
-                                end
-                        )
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<TaskResponseDto> searchTasksByDescription(
-            String description
-    ) {
+    public List<TaskResponseDto> searchTasksByDescription(String description) {
         if (description == null || description.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Description search value must not be blank"
-            );
+            throw new IllegalArgumentException(AppConstants.BLANK_DESCRIPTION_SEARCH_MESSAGE);
         }
 
-        return toResponseList(
-                taskRepository
-                        .findByDescriptionContainingIgnoreCaseAndDeletedFalse(
-                                description.trim()
-                        )
-        );
+        return toResponseList(taskRepository.findByDescriptionContainingIgnoreCaseAndDeletedFalse(description.trim()));
     }
 
     private User getCurrentUser() {
-        Authentication authentication =
-                SecurityContextHolder
+        Authentication authentication = SecurityContextHolder
                         .getContext()
                         .getAuthentication();
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-            throw new IllegalStateException(
-                    "Current user is not authenticated"
-            );
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException(AppConstants.CURRENT_USER_NOT_AUTHENTICATED_MESSAGE);
         }
 
         String username = authentication.getName();
@@ -343,9 +253,7 @@ public class TaskService {
         User user = userRepository.findByUsername(username);
 
         if (user == null) {
-            throw new UserNotFoundException(
-                    "Authenticated user was not found"
-            );
+            throw new UserNotFoundException(AppConstants.AUTHENTICATED_USER_NOT_FOUND_MESSAGE);
         }
 
         return user;

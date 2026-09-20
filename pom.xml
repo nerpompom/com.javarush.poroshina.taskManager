@@ -10,7 +10,6 @@
   <name>taskManager</name>
   <url>http://maven.apache.org</url>
 
-  <!-- 1. Родитель Spring Boot -->
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
@@ -18,7 +17,6 @@
     <relativePath/>
   </parent>
 
-  <!-- 2. Свойства -->
   <properties>
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
@@ -26,28 +24,23 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <!-- 3. Зависимости -->
   <dependencies>
-    <!-- Веб / REST -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
-    <!-- JPA / Hibernate -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
 
-    <!-- PostgreSQL driver -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Опционально: DBeaver/IDE часто просят этот драйвер для отображения метрик пула -->
     <dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
@@ -58,7 +51,6 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
-    <!-- Тесты (опционально, но рекомендуется) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -83,12 +75,11 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Защита -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    <!-- Для работы с JWT-токенами -->
+
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -98,13 +89,6 @@
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>0.12.6</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-jackson</artifactId>
       <version>0.12.6</version>
       <scope>runtime</scope>
     </dependency>
@@ -127,10 +111,8 @@
     </dependency>
   </dependencies>
 
-  <!-- 4. Плагины -->
   <build>
     <plugins>
-      <!-- Spring Boot плагин для запуска и сборки -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

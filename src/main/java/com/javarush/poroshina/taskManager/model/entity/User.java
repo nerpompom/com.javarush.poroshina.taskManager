@@ -1,8 +1,7 @@
 package com.javarush.poroshina.taskManager.model.entity;
-//Проверить что в геттерах сеттерах везде одинаковые типы
+
 import com.javarush.poroshina.taskManager.model.Role;
 import jakarta.persistence.*;
-
 import java.util.ArrayList;
 import java.util.List;
 

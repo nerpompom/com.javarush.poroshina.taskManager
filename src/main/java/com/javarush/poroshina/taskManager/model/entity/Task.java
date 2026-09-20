@@ -1,10 +1,8 @@
 package com.javarush.poroshina.taskManager.model.entity;
-//Проверить что в геттерах сеттерах везде одинаковые типы
+
 import com.javarush.poroshina.taskManager.model.TaskStatus;
 import jakarta.persistence.*;
-
 import java.time.Instant;
-
 
 @Entity
 @Table(name = "tasks")
@@ -53,13 +51,11 @@ public class Task {
         this.updatedAt = Instant.now();
     }
 
-
-    //Проверить чтобы были не примитивы а ссылки
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -119,11 +115,11 @@ public class Task {
         this.completedAt = completedAt;
     }
 
-    public boolean isDeleted() {
+    public Boolean isDeleted() {
         return deleted;
     }
 
-    public void setDeleted(boolean deleted) {
+    public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
     }
 }

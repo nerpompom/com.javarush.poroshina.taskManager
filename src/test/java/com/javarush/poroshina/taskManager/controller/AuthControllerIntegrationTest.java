@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
+
     @Test
     void shouldRegisterNewUser() throws Exception {
         mockMvc.perform(post("/api/auth/register")
@@ -32,6 +33,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.id").value(notNullValue()))
                 .andExpect(jsonPath("$.username").value("alice"));
     }
+
     @Test
     void shouldFailWhenUsernameAlreadyTaken() throws Exception {
         mockMvc.perform(post("/api/auth/register")
@@ -43,6 +45,7 @@ class AuthControllerIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isCreated());
+
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -53,6 +56,7 @@ class AuthControllerIntegrationTest {
                                 """))
                 .andExpect(status().isUnauthorized());
     }
+
     @Test
     void shouldLoginWithValidCredentials() throws Exception {
         mockMvc.perform(post("/api/auth/register")
@@ -64,6 +68,7 @@ class AuthControllerIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isCreated());
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -75,6 +80,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString());
     }
+
     @Test
     void shouldFailLoginWithWrongPassword() throws Exception {
         mockMvc.perform(post("/api/auth/register")
@@ -86,6 +92,7 @@ class AuthControllerIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isCreated());
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

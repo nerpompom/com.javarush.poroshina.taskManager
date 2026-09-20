@@ -1,5 +1,6 @@
 package com.javarush.poroshina.taskManager.security;
 
+import com.javarush.poroshina.taskManager.config.AppConstants;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -12,30 +13,22 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 @Component
-public class JwtAuthenticationFilter
-        extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService,
-            UserRepository userRepository
-    ) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
 
     @Override
-    protected boolean shouldNotFilter(
-            HttpServletRequest request
-    ) {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
 
         return path.equals("/actuator/health")
@@ -49,12 +42,9 @@ public class JwtAuthenticationFilter
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        String authorizationHeader = request.getHeader("Authorization");
 
-        String authorizationHeader =
-                request.getHeader("Authorization");
-
-        if (authorizationHeader == null
-                || !authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -62,52 +52,32 @@ public class JwtAuthenticationFilter
         String token = authorizationHeader.substring(7);
 
         if (!jwtService.isTokenValid(token)) {
-            response.setStatus(
-                    HttpServletResponse.SC_UNAUTHORIZED
-            );
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("text/plain");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(
-                    "Invalid or expired token"
-            );
+            response.getWriter().write(AppConstants.INVALID_TOKEN_MESSAGE);
             return;
         }
 
         if (SecurityContextHolder
                 .getContext()
                 .getAuthentication() == null) {
-
             String username = jwtService.getUsername(token);
             User user = userRepository.findByUsername(username);
 
             if (user == null) {
-                response.setStatus(
-                        HttpServletResponse.SC_UNAUTHORIZED
-                );
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("text/plain");
                 response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(
-                        "User from token was not found"
-                );
+                response.getWriter().write(AppConstants.USER_TOKEN_NOT_FOUD_MASSAGE);
                 return;
             }
 
-            SimpleGrantedAuthority authority =
-                    new SimpleGrantedAuthority(
-                            "ROLE_" + user.getRole().name()
-                    );
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user.getUsername(),
-                            null,
-                            List.of(authority)
-                    );
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, List.of(authority));
 
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource()
-                            .buildDetails(request)
-            );
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder
                     .getContext()

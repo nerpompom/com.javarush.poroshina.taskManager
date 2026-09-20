@@ -1,5 +1,6 @@
 package com.javarush.poroshina.taskManager.service;
 
+import com.javarush.poroshina.taskManager.config.AppConstants;
 import com.javarush.poroshina.taskManager.model.dto.UserRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.UserResponseDto;
 import com.javarush.poroshina.taskManager.model.Role;
@@ -14,12 +15,10 @@ import com.javarush.poroshina.taskManager.security.JwtService;
 import org.springframework.context.ApplicationEventPublisher;
 import com.javarush.poroshina.taskManager.model.dto.AuthRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.AuthResponseDto;
-
 import java.util.List;
 
 @Service
 public class AuthService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -39,18 +38,13 @@ public class AuthService {
 
     @Transactional
     public UserResponseDto register(UserRequestDto request) {
-        if (userRepository.findByUsername(request.getUsername())
-                != null) {
-            throw new IllegalArgumentException(
-                    "Username is already taken"
-            );
+        if (userRepository.findByUsername(request.getUsername()) != null) {
+            throw new IllegalArgumentException(AppConstants.USERNAME_EXIST_MESSAGE);
         }
 
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(
-                passwordEncoder.encode(request.getPassword())
-        );
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
@@ -63,31 +57,16 @@ public class AuthService {
         );
     }
 
-    public AuthResponseDto login(
-            AuthRequestDto request
-    ) {
-        User user = userRepository.findByUsername(
-                request.getUsername()
-        );
+    public AuthResponseDto login(AuthRequestDto request) {
+        User user = userRepository.findByUsername(request.getUsername());
 
-        if (user == null
-                || !passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        )) {
-            throw new InvalidCredentialsException(
-                    "Invalid username or password"
-            );
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException(AppConstants.INVALID_USERNAME_OR_PASSWORD_MESSAGE);
         }
 
-        String token = jwtService.createToken(
-                user.getId(),
-                user.getUsername()
-        );
+        String token = jwtService.createToken(user.getId(), user.getUsername());
 
-        eventPublisher.publishEvent(
-                new UserLoginEvent(user.getId())
-        );
+        eventPublisher.publishEvent(new UserLoginEvent(user.getId()));
 
         return new AuthResponseDto(token);
     }

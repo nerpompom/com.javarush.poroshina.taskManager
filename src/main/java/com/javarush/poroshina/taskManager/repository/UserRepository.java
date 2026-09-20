@@ -5,7 +5,6 @@ import com.javarush.poroshina.taskManager.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -13,9 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     User findByUsername(String username);
 
-    List<User> findByUsernameContainingIgnoreCase(
-            String username
-    );
+    List<User> findByUsernameContainingIgnoreCase(String username);
 
     @Query("""
             select distinct u
@@ -32,9 +29,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         where t.id = :taskId
           and t.deleted = false
         """)
-    Optional<User> findUserByAuthoredTaskId(
-            @Param("taskId") Long taskId
-    );
+    Optional<User> findUserByAuthoredTaskId(@Param("taskId") Long taskId);
 
     @Query("""
             select u
@@ -63,9 +58,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         where t.id = :taskId
           and t.deleted = false
         """)
-    Optional<User> findUserByExecutedTaskId(
-            @Param("taskId") Long taskId
-    );
+    Optional<User> findUserByExecutedTaskId(@Param("taskId") Long taskId);
 
     @Query("""
             select u
@@ -86,7 +79,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             where t.taskStatus = :status
               and t.deleted = false
             """)
-    List<User> findUsersWithExecutedTasksByStatus(
-            @Param("status") TaskStatus status
-    );
+    List<User> findUsersWithExecutedTasksByStatus(@Param("status") TaskStatus status);
 }
