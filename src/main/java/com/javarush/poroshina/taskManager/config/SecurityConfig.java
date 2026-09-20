@@ -18,18 +18,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
+
+    private final JwtAuthenticationEntryPoint
+            jwtAuthenticationEntryPoint;
+
+    private final JwtAccessDeniedHandler
+            jwtAccessDeniedHandler;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler
     ) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-        this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.jwtAuthenticationFilter =
+                jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint =
+                jwtAuthenticationEntryPoint;
+        this.jwtAccessDeniedHandler =
+                jwtAccessDeniedHandler;
     }
 
     @Bean
@@ -41,29 +49,64 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
+
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler))
+                        .authenticationEntryPoint(
+                                jwtAuthenticationEntryPoint
+                        )
+                        .accessDeniedHandler(
+                                jwtAccessDeniedHandler
+                        )
+                )
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // Регистрация и login — без JWT
                         .requestMatchers("/api/auth/**")
                         .permitAll()
+
+                        // Health доступен без JWT
+                        .requestMatchers("/actuator/health")
+                        .permitAll()
+
+                        // Остальные Actuator endpoints —
+                        // только ADMIN
+                        .requestMatchers("/actuator/**")
+                        .hasRole("ADMIN")
+
+                        // Users — USER или ADMIN
                         .requestMatchers("/api/v1/users/**")
                         .hasAnyRole("USER", "ADMIN")
+
+                        // Удаление задач — только ADMIN
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/v1/tasks/**"
                         )
                         .hasRole("ADMIN")
+
+                        // Остальные задачи — USER или ADMIN
                         .requestMatchers("/api/v1/tasks/**")
                         .hasAnyRole("USER", "ADMIN")
+
+                        // Остальные запросы требуют авторизацию
                         .anyRequest()
                         .authenticated()
                 )
+
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        .sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

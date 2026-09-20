@@ -19,3 +19,9 @@ app:
   jwt:
     secret: "8fQ2mL7xP9vB4nK6sD3hJ5wR1tY8uI0o"
     expiration-seconds: 36000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics #"*" # prometeus - если подключить, то обычные ручки перестают работать. Если подключать то наверное надо к графане дальше отдавать

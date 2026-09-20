@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.javarush.poroshina.taskManager.metrics.UserLoginEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,17 +28,20 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthController(
             JwtService jwtService,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            AuthService authService
+            AuthService authService,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authService = authService;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping("/register")
@@ -57,6 +62,10 @@ public class AuthController {
         }
 
         String token = jwtService.createToken(user.getId(), user.getUsername());
+
+        eventPublisher.publishEvent(
+                new UserLoginEvent(user.getId())
+        );
 
         return ResponseEntity.ok(
                 new AuthResponseDto(token)

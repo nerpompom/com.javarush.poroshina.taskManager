@@ -2,6 +2,7 @@ package com.javarush.poroshina.taskManager.service;
 
 import com.javarush.poroshina.taskManager.exception.TaskNotFoundException;
 import com.javarush.poroshina.taskManager.exception.UserNotFoundException;
+import com.javarush.poroshina.taskManager.metrics.TaskCreatedEvent;
 import com.javarush.poroshina.taskManager.model.TaskStatus;
 import com.javarush.poroshina.taskManager.model.dto.TaskCreateRequestDto;
 import com.javarush.poroshina.taskManager.model.dto.TaskResponseDto;
@@ -10,6 +11,7 @@ import com.javarush.poroshina.taskManager.model.entity.Task;
 import com.javarush.poroshina.taskManager.model.entity.User;
 import com.javarush.poroshina.taskManager.repository.TaskRepository;
 import com.javarush.poroshina.taskManager.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 
 
 import org.springframework.stereotype.Service;
@@ -26,13 +28,16 @@ import java.util.stream.Collectors;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TaskService(
             TaskRepository taskRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +68,9 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
+        eventPublisher.publishEvent(
+                new TaskCreatedEvent()
+        );
         return toResponse(savedTask);
     }
 
