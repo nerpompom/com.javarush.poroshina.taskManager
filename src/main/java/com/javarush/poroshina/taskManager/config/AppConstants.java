@@ -17,6 +17,7 @@ public final class AppConstants {
     public static final String BLANK_DESCRIPTION_MASSAGE = "Description must not be blank";
     public static final String BIG_DESCRIPTION_MASSAGE = "Description must be at most 1000 characters";
     public static final String NULL_STATUS_MESSAGE = "Task status must not be null";
+    public static final String EMPTY_TASK_UPDATE_MESSAGE = "At least one field (description, taskStatus, executorId) must be provided";
     public static final String BLANK_USERNAME_MESSAGE = "Username must not be blank";
     public static final String SMALL_USERNAME_MESSAGE = "Username must be at least 3 characters";
     public static final String BLANK_PASSWORD_MESSAGE = "Password must not be blank";

@@ -9,6 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +37,38 @@ class TaskControllerIntegrationTest {
                 .andExpect(jsonPath("$.description").value("Интеграционный тест"))
                 .andExpect(jsonPath("$.taskStatus").value("CREATED"))
                 .andExpect(jsonPath("$.authorUsername").value("gina"));
+    }
+
+    @Test
+    void shouldUpdateDescriptionWithoutChangingStatus() throws Exception {
+        String token = registerAndLogin("ivy", "secret");
+
+        MvcResult createResult = mockMvc.perform(post("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "description": "Исходное описание"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        Integer taskId = com.jayway.jsonpath.JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
+
+        mockMvc.perform(put("/api/v1/tasks/" + taskId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "description": "Новое описание"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.description").value("Новое описание"))
+                .andExpect(jsonPath("$.taskStatus").value("CREATED"))
+                .andExpect(jsonPath("$.descriptionUpdatedByUsername").value("ivy"))
+                .andExpect(jsonPath("$.statusUpdatedByUsername").value("ivy"));
     }
 
     @Test

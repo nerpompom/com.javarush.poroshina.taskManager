@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,15 +56,19 @@ public class TaskService {
     @Transactional
     public TaskResponseDto createTask(TaskCreateRequestDto request) {
         User author = getCurrentUser();
+        Instant now = Instant.now();
 
         Task task = new Task();
         task.setDescription(request.getDescription());
         task.setTaskStatus(TaskStatus.CREATED);
         task.setAuthor(author);
-        task.setCreatedAt(Instant.now());
+        task.setCreatedAt(now);
+        task.setDescriptionUpdatedBy(author);
+        task.setDescriptionUpdatedAt(now);
+        task.setStatusUpdatedBy(author);
+        task.setStatusUpdatedAt(now);
         task.setDeleted(false);
         task.setCompletedAt(null);
-        task.setUpdatedAt(null);
 
         Task savedTask = taskRepository.save(task);
 
@@ -79,47 +84,38 @@ public class TaskService {
             throw new TaskNotFoundException(AppConstants.TASK_NOT_FOUND_MESSAGE + id);
         }
 
-        TaskStatus newStatus = request.getTaskStatus();
-
-        if (newStatus == TaskStatus.IN_PROGRESS && request.getExecutorId() == null) {
-            throw new IllegalStateException(AppConstants.EXECUTOR_ID_REQUIRED_FOR_IN_PROGRESS_MESSAGE);
+        if (request.getDescription() == null && request.getTaskStatus() == null && request.getExecutorId() == null) {
+            throw new IllegalStateException(AppConstants.EMPTY_TASK_UPDATE_MESSAGE);
         }
 
-        if (newStatus == TaskStatus.CREATED && request.getExecutorId() != null) {
-            throw new IllegalStateException(AppConstants.EXECUTOR_ID_MUST_BE_NULL_FOR_CREATED_MESSAGE);
-        }
+        User currentUser = getCurrentUser();
+        Instant now = Instant.now();
+        TaskStatus currentStatus = task.getTaskStatus();
+        TaskStatus targetStatus = request.getTaskStatus() != null ? request.getTaskStatus() : currentStatus;
+        boolean statusChanging = request.getTaskStatus() != null && request.getTaskStatus() != currentStatus;
 
-        if (newStatus == TaskStatus.DONE && request.getExecutorId() == null) {
-            throw new IllegalStateException(AppConstants.EXECUTOR_ID_REQUIRED_FOR_DONE_MESSAGE);
-        }
-
-        if (newStatus == TaskStatus.DONE && task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
+        if (targetStatus == TaskStatus.DONE && currentStatus != TaskStatus.IN_PROGRESS && currentStatus != TaskStatus.DONE) {
             throw new IllegalStateException(AppConstants.ONLY_IN_PROGRESS_TASK_CAN_BE_COMPLETED_MESSAGE);
         }
 
-        task.setDescription(request.getDescription());
-        task.setTaskStatus(newStatus);
+        if (request.getDescription() != null) {
+            if (request.getDescription().isBlank()) {
+                throw new IllegalStateException(AppConstants.BLANK_DESCRIPTION_MASSAGE);
+            }
 
-        if (newStatus == TaskStatus.CREATED) {
-            task.setExecutor(null);
-            task.setCompletedAt(null);
+            if (!Objects.equals(task.getDescription(), request.getDescription())) {
+                task.setDescription(request.getDescription());
+                task.setDescriptionUpdatedBy(currentUser);
+                task.setDescriptionUpdatedAt(now);
+            }
         }
 
-        if (newStatus == TaskStatus.IN_PROGRESS) {
-            User executor = getUserById(request.getExecutorId());
-
-            task.setExecutor(executor);
-            task.setCompletedAt(null);
+        if (statusChanging) {
+            applyStatusTransition(task, currentStatus, targetStatus, request.getExecutorId(), currentUser, now);
+        } else {
+            applyExecutorChange(task, targetStatus, request.getExecutorId(), currentUser, now);
         }
 
-        if (newStatus == TaskStatus.DONE) {
-            User executor = getUserById(request.getExecutorId());
-
-            task.setExecutor(executor);
-            task.setCompletedAt(Instant.now());
-        }
-
-        task.setUpdatedAt(Instant.now());
         Task savedTask = taskRepository.save(task);
 
         return toResponse(savedTask);
@@ -133,11 +129,104 @@ public class TaskService {
             throw new TaskNotFoundException(AppConstants.TASK_NOT_FOUND_MESSAGE + id);
         }
 
+        User currentUser = getCurrentUser();
+
         task.setDeleted(true);
+        task.setDeletedBy(currentUser);
         task.setExecutor(null);
         task.setCompletedAt(null);
-        task.setUpdatedAt(Instant.now());
         taskRepository.save(task);
+    }
+
+    private void applyStatusTransition(
+            Task task,
+            TaskStatus currentStatus,
+            TaskStatus targetStatus,
+            Long requestedExecutorId,
+            User currentUser,
+            Instant now
+    ) {
+        task.setTaskStatus(targetStatus);
+        task.setStatusUpdatedBy(currentUser);
+        task.setStatusUpdatedAt(now);
+
+        if (targetStatus == TaskStatus.CREATED) {
+            if (requestedExecutorId != null) {
+                throw new IllegalStateException(AppConstants.EXECUTOR_ID_MUST_BE_NULL_FOR_CREATED_MESSAGE);
+            }
+
+            if (task.getExecutor() != null) {
+                task.setExecutor(null);
+                task.setExecutorUpdatedBy(currentUser);
+                task.setExecutorUpdatedAt(now);
+            }
+
+            task.setCompletedAt(null);
+            return;
+        }
+
+        User executor = resolveExecutorForAssignedStatus(task, requestedExecutorId);
+
+        if (!sameExecutor(task.getExecutor(), executor)) {
+            task.setExecutor(executor);
+            task.setExecutorUpdatedBy(currentUser);
+            task.setExecutorUpdatedAt(now);
+        }
+
+        if (targetStatus == TaskStatus.IN_PROGRESS) {
+            task.setCompletedAt(null);
+        }
+
+        if (targetStatus == TaskStatus.DONE && currentStatus != TaskStatus.DONE) {
+            task.setCompletedAt(now);
+        }
+    }
+
+    private void applyExecutorChange(
+            Task task,
+            TaskStatus targetStatus,
+            Long requestedExecutorId,
+            User currentUser,
+            Instant now
+    ) {
+        if (requestedExecutorId == null) {
+            return;
+        }
+
+        if (targetStatus == TaskStatus.CREATED) {
+            throw new IllegalStateException(AppConstants.EXECUTOR_ID_MUST_BE_NULL_FOR_CREATED_MESSAGE);
+        }
+
+        User executor = getUserById(requestedExecutorId);
+
+        if (!sameExecutor(task.getExecutor(), executor)) {
+            task.setExecutor(executor);
+            task.setExecutorUpdatedBy(currentUser);
+            task.setExecutorUpdatedAt(now);
+        }
+    }
+
+    private User resolveExecutorForAssignedStatus(Task task, Long requestedExecutorId) {
+        if (requestedExecutorId != null) {
+            return getUserById(requestedExecutorId);
+        }
+
+        if (task.getExecutor() == null) {
+            throw new IllegalStateException(
+                    task.getTaskStatus() == TaskStatus.DONE
+                            ? AppConstants.EXECUTOR_ID_REQUIRED_FOR_DONE_MESSAGE
+                            : AppConstants.EXECUTOR_ID_REQUIRED_FOR_IN_PROGRESS_MESSAGE
+            );
+        }
+
+        return task.getExecutor();
+    }
+
+    private boolean sameExecutor(User currentExecutor, User newExecutor) {
+        Long currentId = currentExecutor != null ? currentExecutor.getId() : null;
+        Long newId = newExecutor != null ? newExecutor.getId() : null;
+
+        return Objects.equals(currentId, newId);
     }
 
     private Task getTaskById(Long id) {
@@ -153,6 +242,9 @@ public class TaskService {
     private TaskResponseDto toResponse(Task task) {
         User author = task.getAuthor();
         User executor = task.getExecutor();
+        User descriptionUpdatedBy = task.getDescriptionUpdatedBy();
+        User statusUpdatedBy = task.getStatusUpdatedBy();
+        User executorUpdatedBy = task.getExecutorUpdatedBy();
 
         return new TaskResponseDto(
                 task.getId(),
@@ -163,7 +255,15 @@ public class TaskService {
                 executor != null ? executor.getId() : null,
                 executor != null ? executor.getUsername() : null,
                 task.getCreatedAt(),
-                task.getUpdatedAt(),
+                descriptionUpdatedBy != null ? descriptionUpdatedBy.getId() : null,
+                descriptionUpdatedBy != null ? descriptionUpdatedBy.getUsername() : null,
+                task.getDescriptionUpdatedAt(),
+                statusUpdatedBy != null ? statusUpdatedBy.getId() : null,
+                statusUpdatedBy != null ? statusUpdatedBy.getUsername() : null,
+                task.getStatusUpdatedAt(),
+                executorUpdatedBy != null ? executorUpdatedBy.getId() : null,
+                executorUpdatedBy != null ? executorUpdatedBy.getUsername() : null,
+                task.getExecutorUpdatedAt(),
                 task.getCompletedAt(),
                 task.isDeleted()
         );
@@ -219,7 +319,7 @@ public class TaskService {
         Instant start = toStartOfDay(date, zoneId);
         Instant end = toStartOfDay(date.plusDays(1), zoneId);
 
-        return toResponseList(taskRepository.findByUpdatedAtGreaterThanEqualAndUpdatedAtLessThanAndDeletedFalse(start, end));
+        return toResponseList(taskRepository.findUpdatedBetweenAndDeletedFalse(start, end));
     }
 
     @Transactional(readOnly = true)

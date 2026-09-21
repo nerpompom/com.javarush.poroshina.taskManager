@@ -30,8 +30,26 @@ public class Task {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at")
-    private Instant updatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "description_updated_by_id")
+    private User descriptionUpdatedBy;
+
+    @Column(name = "description_updated_at")
+    private Instant descriptionUpdatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_updated_by_id")
+    private User statusUpdatedBy;
+
+    @Column(name = "status_updated_at")
+    private Instant statusUpdatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "executor_updated_by_id")
+    private User executorUpdatedBy;
+
+    @Column(name = "executor_updated_at")
+    private Instant executorUpdatedAt;
 
     @Column(name = "completed_at")
     private Instant completedAt;
@@ -39,16 +57,15 @@ public class Task {
     @Column(name = "is_deleted", nullable = false)
     private Boolean deleted = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deleted_by_id")
+    private User deletedBy;
+
     @PrePersist
     private void onCreate() {
         if (this.createdAt == null) {
             this.createdAt = Instant.now();
         }
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        this.updatedAt = Instant.now();
     }
 
     public Long getId() {
@@ -99,12 +116,52 @@ public class Task {
         this.createdAt = createdAt;
     }
 
-    public Instant getUpdatedAt() {
-        return updatedAt;
+    public User getDescriptionUpdatedBy() {
+        return descriptionUpdatedBy;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setDescriptionUpdatedBy(User descriptionUpdatedBy) {
+        this.descriptionUpdatedBy = descriptionUpdatedBy;
+    }
+
+    public Instant getDescriptionUpdatedAt() {
+        return descriptionUpdatedAt;
+    }
+
+    public void setDescriptionUpdatedAt(Instant descriptionUpdatedAt) {
+        this.descriptionUpdatedAt = descriptionUpdatedAt;
+    }
+
+    public User getStatusUpdatedBy() {
+        return statusUpdatedBy;
+    }
+
+    public void setStatusUpdatedBy(User statusUpdatedBy) {
+        this.statusUpdatedBy = statusUpdatedBy;
+    }
+
+    public Instant getStatusUpdatedAt() {
+        return statusUpdatedAt;
+    }
+
+    public void setStatusUpdatedAt(Instant statusUpdatedAt) {
+        this.statusUpdatedAt = statusUpdatedAt;
+    }
+
+    public User getExecutorUpdatedBy() {
+        return executorUpdatedBy;
+    }
+
+    public void setExecutorUpdatedBy(User executorUpdatedBy) {
+        this.executorUpdatedBy = executorUpdatedBy;
+    }
+
+    public Instant getExecutorUpdatedAt() {
+        return executorUpdatedAt;
+    }
+
+    public void setExecutorUpdatedAt(Instant executorUpdatedAt) {
+        this.executorUpdatedAt = executorUpdatedAt;
     }
 
     public Instant getCompletedAt() {
@@ -121,5 +178,13 @@ public class Task {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public User getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(User deletedBy) {
+        this.deletedBy = deletedBy;
     }
 }

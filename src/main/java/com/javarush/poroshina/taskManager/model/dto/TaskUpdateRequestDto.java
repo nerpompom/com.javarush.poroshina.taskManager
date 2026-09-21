@@ -2,16 +2,12 @@ package com.javarush.poroshina.taskManager.model.dto;
 
 import com.javarush.poroshina.taskManager.config.AppConstants;
 import com.javarush.poroshina.taskManager.model.TaskStatus;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class TaskUpdateRequestDto {
-    @NotBlank(message = AppConstants.BLANK_DESCRIPTION_MASSAGE)
     @Size(max = 1000, message = AppConstants.BIG_DESCRIPTION_MASSAGE)
     private String description;
 
-    @NotNull(message = AppConstants.NULL_STATUS_MESSAGE)
     private TaskStatus taskStatus;
 
     private Long executorId;

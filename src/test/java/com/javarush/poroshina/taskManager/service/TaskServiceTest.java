@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -110,6 +111,9 @@ class TaskServiceTest {
         assertEquals(TaskStatus.CREATED, result.getTaskStatus());
         assertEquals(1L, result.getAuthorId());
         assertEquals("author", result.getAuthorUsername());
+        assertEquals(1L, result.getDescriptionUpdatedById());
+        assertEquals(1L, result.getStatusUpdatedById());
+        assertNull(result.getExecutorUpdatedById());
 
         ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
 
@@ -126,8 +130,88 @@ class TaskServiceTest {
     }
 
     @Test
+    void shouldUpdateDescriptionWithoutChangingStatus() {
+        setAuthenticatedUser("author");
+
+        TaskUpdateRequestDto request = new TaskUpdateRequestDto();
+        request.setDescription("Updated description");
+
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findByUsername("author")).thenReturn(author);
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskResponseDto result = taskService.updateTask(10L, request);
+
+        assertEquals("Updated description", result.getDescription());
+        assertEquals(TaskStatus.CREATED, result.getTaskStatus());
+        assertNull(result.getExecutorId());
+        assertEquals(1L, result.getDescriptionUpdatedById());
+        assertNotNull(result.getDescriptionUpdatedAt());
+        assertEquals(author, task.getStatusUpdatedBy());
+    }
+
+    @Test
+    void shouldUpdateExecutorWithoutChangingStatus() {
+        User currentExecutor = createUser(2L, "executor");
+        User newExecutor = createUser(3L, "new-executor");
+        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+        task.setExecutor(currentExecutor);
+
+        setAuthenticatedUser("author");
+
+        TaskUpdateRequestDto request = new TaskUpdateRequestDto();
+        request.setExecutorId(3L);
+
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findByUsername("author")).thenReturn(author);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(newExecutor));
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskResponseDto result = taskService.updateTask(10L, request);
+
+        assertEquals(TaskStatus.IN_PROGRESS, result.getTaskStatus());
+        assertEquals(3L, result.getExecutorId());
+        assertEquals("new-executor", result.getExecutorUsername());
+        assertEquals(1L, result.getExecutorUpdatedById());
+        assertNotNull(result.getExecutorUpdatedAt());
+    }
+
+    @Test
+    void shouldNotAllowAssigningExecutorWhileTaskIsCreated() {
+        setAuthenticatedUser("author");
+
+        TaskUpdateRequestDto request = new TaskUpdateRequestDto();
+        request.setExecutorId(2L);
+
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findByUsername("author")).thenReturn(author);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> taskService.updateTask(10L, request));
+
+        assertEquals("Executor id must be null for CREATED status", exception.getMessage());
+    }
+
+    @Test
+    void shouldNotAllowCompletingTaskThatIsNotInProgress() {
+        setAuthenticatedUser("author");
+
+        TaskUpdateRequestDto request = new TaskUpdateRequestDto();
+        request.setTaskStatus(TaskStatus.DONE);
+        request.setExecutorId(2L);
+
+        when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findByUsername("author")).thenReturn(author);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> taskService.updateTask(10L, request));
+
+        assertEquals("Only task in progress can be completed", exception.getMessage());
+    }
+
+    @Test
     void shouldUpdateTaskToInProgressAndThenToDone() {
         User executor = createUser(2L, "executor");
+
+        setAuthenticatedUser("author");
 
         TaskUpdateRequestDto inProgressRequest = new TaskUpdateRequestDto();
 
@@ -136,6 +220,7 @@ class TaskServiceTest {
         inProgressRequest.setExecutorId(2L);
 
         when(taskRepository.findByIdAndDeletedFalse(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findByUsername("author")).thenReturn(author);
         when(userRepository.findById(2L)).thenReturn(Optional.of(executor));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -145,8 +230,10 @@ class TaskServiceTest {
         assertEquals("Task in progress", inProgressResult.getDescription());
         assertEquals(2L, inProgressResult.getExecutorId());
         assertEquals("executor", inProgressResult.getExecutorUsername());
-        assertNotNull(inProgressResult.getUpdatedAt());
-        assertEquals(null, inProgressResult.getCompletedAt());
+        assertEquals(1L, inProgressResult.getStatusUpdatedById());
+        assertEquals(1L, inProgressResult.getExecutorUpdatedById());
+        assertNotNull(inProgressResult.getStatusUpdatedAt());
+        assertNull(inProgressResult.getCompletedAt());
 
         TaskUpdateRequestDto doneRequest = new TaskUpdateRequestDto();
 
@@ -160,7 +247,7 @@ class TaskServiceTest {
         assertEquals("Task completed", doneResult.getDescription());
         assertEquals(2L, doneResult.getExecutorId());
         assertEquals("executor", doneResult.getExecutorUsername());
-        assertNotNull(doneResult.getUpdatedAt());
+        assertNotNull(doneResult.getStatusUpdatedAt());
         assertNotNull(doneResult.getCompletedAt());
 
         verify(taskRepository, org.mockito.Mockito.times(2)).findByIdAndDeletedFalse(10L);
@@ -186,15 +273,19 @@ class TaskServiceTest {
 
     private Task createTask(Long id, String description, TaskStatus status, User author
     ) {
+        Instant now = Instant.now();
         Task task = new Task();
         task.setId(id);
         task.setDescription(description);
         task.setTaskStatus(status);
         task.setAuthor(author);
-        task.setCreatedAt(Instant.now());
+        task.setCreatedAt(now);
+        task.setDescriptionUpdatedBy(author);
+        task.setDescriptionUpdatedAt(now);
+        task.setStatusUpdatedBy(author);
+        task.setStatusUpdatedAt(now);
         task.setDeleted(false);
         task.setCompletedAt(null);
-        task.setUpdatedAt(null);
 
         return task;
     }

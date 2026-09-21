@@ -12,9 +12,15 @@ CREATE TABLE IF NOT EXISTS tasks (
                                      author_id BIGINT NOT NULL,
                                      executor_id BIGINT,
                                      created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                                     updated_at TIMESTAMP WITH TIME ZONE,
+                                     description_updated_by_id BIGINT,
+                                     description_updated_at TIMESTAMP WITH TIME ZONE,
+                                     status_updated_by_id BIGINT,
+                                     status_updated_at TIMESTAMP WITH TIME ZONE,
+                                     executor_updated_by_id BIGINT,
+                                     executor_updated_at TIMESTAMP WITH TIME ZONE,
                                      completed_at TIMESTAMP WITH TIME ZONE,
                                      is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+                                     deleted_by_id BIGINT,
 
                                      CONSTRAINT fk_tasks_author
                                          FOREIGN KEY (author_id)
@@ -22,6 +28,22 @@ CREATE TABLE IF NOT EXISTS tasks (
 
                                      CONSTRAINT fk_tasks_executor
                                          FOREIGN KEY (executor_id)
+                                             REFERENCES users (id),
+
+                                     CONSTRAINT fk_tasks_description_updated_by
+                                         FOREIGN KEY (description_updated_by_id)
+                                             REFERENCES users (id),
+
+                                     CONSTRAINT fk_tasks_status_updated_by
+                                         FOREIGN KEY (status_updated_by_id)
+                                             REFERENCES users (id),
+
+                                     CONSTRAINT fk_tasks_executor_updated_by
+                                         FOREIGN KEY (executor_updated_by_id)
+                                             REFERENCES users (id),
+
+                                     CONSTRAINT fk_tasks_deleted_by
+                                         FOREIGN KEY (deleted_by_id)
                                              REFERENCES users (id)
 );
 
@@ -48,9 +70,15 @@ INSERT INTO tasks (
     author_id,
     executor_id,
     created_at,
-    updated_at,
+    description_updated_by_id,
+    description_updated_at,
+    status_updated_by_id,
+    status_updated_at,
+    executor_updated_by_id,
+    executor_updated_at,
     completed_at,
-    is_deleted
+    is_deleted,
+    deleted_by_id
 )
 VALUES
     (
@@ -59,9 +87,15 @@ VALUES
         1,
         NULL,
         NOW(),
+        1,
+        NOW(),
+        1,
+        NOW(),
         NULL,
         NULL,
-        FALSE
+        NULL,
+        FALSE,
+        NULL
     ),
     (
         'Правки по мп',
@@ -69,9 +103,15 @@ VALUES
         2,
         1,
         NOW(),
+        2,
+        NOW(),
+        2,
+        NOW(),
+        2,
+        NOW(),
         NULL,
-        NULL,
-        FALSE
+        FALSE,
+        NULL
     ),
     (
         'Правки по лк',
@@ -79,7 +119,13 @@ VALUES
         2,
         2,
         NOW(),
-        NULL,
+        2,
         NOW(),
-        FALSE
+        2,
+        NOW(),
+        2,
+        NOW(),
+        NOW(),
+        FALSE,
+        NULL
     );
